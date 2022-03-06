@@ -1,0 +1,138 @@
+from django.http import HttpResponse, JsonResponse
+from django.shortcuts import render, redirect
+from django.core import serializers
+from django.conf import settings
+from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_POST
+
+from .utils import register_status
+from .models import Status, ImageEntry, I2VTag, HashTag, Character
+
+import requests
+import threading
+import itertools
+import json
+
+def index(request):
+    status_list = Status.objects.all()
+    return render(request, 'main/index.html', {'status_list': status_list})
+
+def about(request):
+    return HttpResponse('About')
+
+def register(request, status_id):
+    res = register_status(status_id)
+    return JsonResponse(res)
+
+def status(request, status_id):
+    number = int(request.GET.get('n', default='0'))
+    try:
+        status = Status.objects.get(status_id=status_id)
+        screen_name = status.author.screen_name
+        hashtags = status.hashtags.all()
+    except Status.DoesNotExist:
+        t = threading.Thread(target=register_status, args=(status_id, ))
+        t.start()
+        return render(request, 'main/status.html', {'registered': False, 'status_id': status_id})
+
+    return render(request, 'main/status.html', {
+        'registered': True,
+        'status_id': status_id,
+        'screen_name': screen_name,
+        'hashtags': hashtags,
+        'number': number})
+
+def get_images(request, status_id):
+    try:
+        status = Status.objects.get(status_id=status_id)
+        image_entries = ImageEntry.objects.filter(status=status).order_by('image_number')
+    except:
+        return JsonResponse({"success": False})
+    data = []
+    for entry in image_entries:
+        rating = entry.i2vtags.get(tag_type='RA')
+        i2vtags = [tag.name for T in ['GE', 'CO', 'CH'] for tag in entry.i2vtags.filter(tag_type=T)]
+        characters = [chara.name_ja for chara in entry.characters.all()]
+
+        data.append({
+            "media_url": entry.media_url,
+            "rating": rating.name,
+            "i2vtags": i2vtags,
+            "characters": characters})
+    return JsonResponse({
+        "success": True, 
+        "image_data": data})
+
+@csrf_exempt
+@require_POST
+def get_similar_images(request):
+    data = json.loads(request.body)
+    media_url = data['media_url']
+    res = requests.post(f'http://{settings.IMAGE_SEARCH_SERVER_IP}/search/', json={"media_url": media_url}).json()
+    if res['success']:
+        similar_images = []
+        character_names = []
+        indices = res['indices']
+        media_urls = res['media_urls']
+        for status_id, media_url in zip(indices, media_urls):
+            similar_images.append({"status_url": f"/status/{status_id}",
+                                    "media_url": media_url})
+            try:
+                entry = ImageEntry.objects.get(media_url=media_url)
+                character_names.extend([chara.name_ja for chara in entry.characters.all()])
+            except:
+                pass
+        similar_characters = list(set(character_names))
+        return JsonResponse({"success": True, "similar_images": similar_images,
+                             "similar_characters": similar_characters})
+    else:
+        return JsonResponse({"success": False})
+
+def search(request):
+    i2vtags = request.GET.get('i2vtags')
+    hashtags = request.GET.get('hashtags')
+    keywords = request.GET.get('keyword')
+    character = request.GET.get('character')
+    page = request.GET.get('page', default='1')
+    page = int(page)
+    order = request.GET.get('order', default='created_at')
+    safe = request.GET.get('safe', default='t')
+    safe = True if safe == 't' else False
+
+    images = ImageEntry.objects.filter()
+    if i2vtags is not None:
+        for tag_name in i2vtags.split(';'):
+            try:
+                tag = I2VTag.objects.get(name=tag_name)
+            except I2VTag.DoesNotExist:
+                return render('main/search.html', {'empty': True})
+            images = images.filter(i2vtags=tag)
+    if hashtags is not None:
+        status_list = Status.objects.all()
+        for tag_name in hashtags.split(';'):
+            try:
+                tag = HashTag.objects.get(name=tag_name)
+            except HashTag.DoesNotExist:
+                return render('main/search.html', {'empty': True})
+            status_list = status_list.filter(hashtags=tag)
+        images = images.filter(status__in=status_list)
+    if character is not None:
+        try:
+            chara_tag = Character.objects.get(name_ja=character)
+        except Character.DoesNotExist:
+            return render('main/search.html', {'empty': True})
+        images = images.filter(characters=chara_tag)
+
+    return render(request, 'main/search.html', {'images': images})
+
+@csrf_exempt
+@require_POST
+def register_character(request):
+    print(request.body)
+    data = json.loads(request.body)
+    character, created = Character.objects.get_or_create(name_ja=data['character_name'])
+    status = Status.objects.get(status_id=int(data['status_id']))
+    image_entry = ImageEntry.objects.get(status=status, image_number=data['image_number'])
+    image_entry.characters.add(character)
+    image_entry.save()
+    return JsonResponse({ "success": True, })

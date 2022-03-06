@@ -1,0 +1,22 @@
+{% extends 'main/base.html' %}
+
+{% block page_title%}にじさーち{% endblock %}
+
+{% block content %}
+<div class="container">
+  <h2 class="h5 mt-5">新しく登録されたイラスト</h2>
+  <hr>
+  <div class="mt-4 row">
+    {% for status in status_list %}
+      <div class="col-6 col-sm-4 col-md-3 col-lg-2 mb-3">
+          <a href="{% url 'status' status.status_id %}"><img class="img-fluid" src="{{status.thumbnail_url}}:thumb"></a>
+      </div>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}
+
+{% block script %}
+<script>
+</script>
+{% endblock %}

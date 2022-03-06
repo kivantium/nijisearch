@@ -1,0 +1,151 @@
+{% extends 'main/base.html' %}
+
+{% block page_title%}イラスト詳細 - にじさーち{% endblock %}
+
+{% block content %}
+<div class="container">
+  <h1 class="h5 mt-5">イラスト詳細</h1>
+  <hr>
+  {% if not registered %}
+    <p>現在詳細情報を取得中です。このページは3秒後に自動的に更新されます。</p>
+  {% else %}
+  <div id="app" class="container">
+    <ul class="list-inline">
+      <li class="list-inline-item">
+          <a href="#" class="badge bg-primary rounded-pill text-decoration-none">@{{ screen_name }}</a>
+      </li>
+      {% for hashtag in hashtags %}
+      <li class="list-inline-item">
+          <a href="/search/?hashtags={{ hashtag }}" class="badge bg-info rounded-pill text-decoration-none">#{{ hashtag }}</a>
+      </li>
+      {% endfor %}
+    </ul>
+    <ul class="list-inline mt-3">
+      <li class="list-inline-item">
+        <a v-bind:href="'/search/?i2vtags='+rating" class="badge bg-secondary rounded-pill text-decoration-none">[[ rating ]]</a>
+      </li>
+      <li class="list-inline-item" v-for="tag in i2vtags">
+        <a v-bind:href="'/search/?i2vtags='+tag" class="badge bg-secondary rounded-pill text-decoration-none">[[ tag ]]</a>
+      </li>
+    </ul>
+    <ul class="list-inline mt-3">
+      <li class="list-inline-item" v-for="character in characters">
+        <a v-bind:href="'/search/?character='+character" class="badge bg-success rounded-pill text-decoration-none">[[ character ]]</a>
+      </li>
+    </ul>
+    <div class="row justify-content-center">
+      <div class="col-1 my-auto"><button class="btn btn-outline-secondary" v-if="image_number > 0" v-on:click="updateImage(image_number-1)"><i class="bi bi-arrow-left"></i></button></div>
+      <div class="col-8 col-lg-4"><img class="img-fluid" v-bind:src="media_url"></div>
+      <div class="col-1 my-auto"><button class="btn btn-outline-secondary" v-if="image_number < image_data.length-1" v-on:click="updateImage(image_number+1)"><i class="bi bi-arrow-right"></i></button></div>
+    </div>
+  {% endif %}
+  <hr>
+  <h3 class="h5 mt-5">出典ツイート</h1>
+    <blockquote class="twitter-tweet tw-align-center" data-conversation="none"><a href="https://twitter.com/user/status/{{ status_id }}"></a></blockquote>
+    <script src="https://platform.twitter.com/widgets.js" charset="utf-8"></script>
+  <hr>
+  {% if registered %}
+    <h3 class="h5 mt-4">キャラクター名の登録</h3>
+    <div v-if="similar_characters.length > 0">
+    <h4 class="h6 mt-4">正しい名前をクリックしてください</h4>
+    <ul class="list-inline mt-3">
+      <li class="list-inline-item" v-for="name in similar_characters">
+        <span class="badge bg-secondary rounded-pill text-decoration-none">[[ name ]]</span>
+      </li>
+    </ul>
+    <h4 class="h6 mt-4">候補にない場合は入力してください</h4>
+    </div>
+    <div class="row gy-2 gx-3 align-items-center">
+        <input type="hidden" name="csrfmiddlewaretoken" value="rU3XoO576viBwlNdXsECPMhFizLJn1X0qGkjNPE6nv1WcbouMgwhkWrXfgfgVHeI">
+        <div class="col-auto">
+        <input type="text" class="form-control" v-bind="character_name" ref="input">
+        </div>
+        <div class="col-auto">
+        <button v-on:click="submitInfo" class="btn btn-primary">登録</button>
+        </div>
+    </div>
+    <h1 class="h5 mt-5">類似イラスト</h1>
+    <div class="row">
+      <div class="col-4 col-md-3 col-lg-2 my-1 px-1" v-for="sim in similar_images">
+        <a v-bind:href="sim.status_url"><img class="img-fluid" v-bind:src="sim.media_url"></a></div>
+    </div>
+  </div>
+  {% endif %}
+{% endblock %}
+
+{% block script %}
+{% if registered %}
+<script src="https://unpkg.com/vue@3.2.26"></script>
+<script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+<script>
+const app = Vue.createApp({
+  data() {
+    return { 
+      success: true,
+      image_number: {{ number }},
+      rating: "",
+      i2vtags: [],
+      characters: [],
+      media_url: "",
+      image_data: [],
+      character_name: "",
+      similar_images: [],
+      similar_characters: [],
+    }
+  },
+  mounted() {
+    axios.get('{% url 'get_images' status_id %}')
+      .then(res => {
+        this.success = res.data.success;
+        if(this.success) {
+          var n = this.image_number;
+          this.image_data = res.data.image_data;
+          this.characters = this.image_data[n].characters;
+          this.i2vtags = this.image_data[n].i2vtags;
+          this.rating = this.image_data[n].rating;
+          this.media_url = this.image_data[n].media_url;
+          axios.post('{% url 'get_similar_images' %}', {
+              media_url: this.media_url,
+          }).then(res => {
+            if(res.data.success) {
+              this.similar_images = res.data.similar_images;
+              this.similar_characters = res.data.similar_characters;
+            }
+          });
+        }
+      });
+  },
+  methods: {
+    updateImage: function(n) {
+      this.image_number = n;
+      this.i2vtags = this.image_data[n].i2vtags;
+      this.rating = this.image_data[n].rating;
+      this.media_url = this.image_data[n].media_url;
+    },
+    submitInfo: function() {
+      console.log(this.$refs.input.value);
+      var name = this.$refs.input.value;
+      axios.post('{% url 'register_character' %}', {
+          status_id: "{{ status_id }}",
+          image_number: this.image_number,
+          character_name: name
+      }).then(res => {
+          alert("キャラクター名が登録されました "+name);
+          this.characters.push(name);
+      });
+    }
+  },
+  compilerOptions: {
+    delimiters: ["[[", "]]"]
+  }
+});
+
+const vm = app.mount('#app');
+
+</script>
+{% else %}
+<script>
+setTimeout(function () { location.reload(); }, 3000);
+</script>
+{% endif %}  
+{% endblock %}

@@ -1,0 +1,4 @@
+Django
+onnxruntime
+scikit-image
+tweepy
