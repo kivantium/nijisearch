@@ -11,4 +11,5 @@ urlpatterns = [
     path('get_images/<int:status_id>/', views.get_images, name='get_images'),
     path('get_similar_images/', views.get_similar_images, name='get_similar_images'),
     path('register_character/', views.register_character, name='register_character'),
+    path('delete_character/', views.delete_character, name='delete_character'),
 ]

@@ -18,7 +18,7 @@ class HashTag(models.Model):
         return self.name
 
 class Character(models.Model):
-    name_ja = models.CharField(max_length=140)
+    name_ja = models.TextField(unique=True)
     name_en = models.TextField()
 
     def __str__(self):
@@ -56,11 +56,13 @@ class ImageEntry(models.Model):
     image_number = models.IntegerField()
     media_url = models.URLField()
     collection = models.BooleanField()
+    confirmed = models.BooleanField(default=False)
     is_nsfw = models.BooleanField(default=False)
     is_duplicated = models.BooleanField(default=False)
     is_trimmed = models.BooleanField(default=False)
     i2vtags = models.ManyToManyField(I2VTag)
-    characters = models.ManyToManyField(Character)
+    characters = models.ManyToManyField(Character, related_name='characters')
+    similar_characters = models.ManyToManyField(Character, related_name='similars')
     thumbnail = models.FilePathField()
 
     def __str__(self):

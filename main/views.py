@@ -4,6 +4,7 @@ from django.core import serializers
 from django.conf import settings
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
+from django.db.models import Q
 
 from .utils import register_status
 from .models import Status, ImageEntry, I2VTag, HashTag, Character
@@ -14,7 +15,7 @@ import itertools
 import json
 
 def index(request):
-    status_list = Status.objects.all()
+    status_list = Status.objects.all().order_by('-pk')[:120]
     return render(request, 'main/index.html', {'status_list': status_list})
 
 def about(request):
@@ -93,19 +94,21 @@ def search(request):
     hashtags = request.GET.get('hashtags')
     keywords = request.GET.get('keyword')
     character = request.GET.get('character')
+    only_confirmed = request.GET.get('confirmed', default='f')
     page = request.GET.get('page', default='1')
     page = int(page)
     order = request.GET.get('order', default='created_at')
     safe = request.GET.get('safe', default='t')
     safe = True if safe == 't' else False
+    only_confirmed = True if only_confirmed == 't' else False
 
-    images = ImageEntry.objects.filter()
+    images = ImageEntry.objects.all()
     if i2vtags is not None:
         for tag_name in i2vtags.split(';'):
             try:
                 tag = I2VTag.objects.get(name=tag_name)
             except I2VTag.DoesNotExist:
-                return render('main/search.html', {'empty': True})
+                return render(request, 'main/search.html', {'empty': True})
             images = images.filter(i2vtags=tag)
     if hashtags is not None:
         status_list = Status.objects.all()
@@ -113,26 +116,41 @@ def search(request):
             try:
                 tag = HashTag.objects.get(name=tag_name)
             except HashTag.DoesNotExist:
-                return render('main/search.html', {'empty': True})
+                return render(request, 'main/search.html', {'empty': True})
             status_list = status_list.filter(hashtags=tag)
         images = images.filter(status__in=status_list)
     if character is not None:
         try:
             chara_tag = Character.objects.get(name_ja=character)
         except Character.DoesNotExist:
-            return render('main/search.html', {'empty': True})
-        images = images.filter(characters=chara_tag)
+            return render(request, 'main/search.html', {'empty': True})
+        if only_confirmed:
+            images = images.filter(characters=chara_tag)
+        else:
+            images = images.filter(Q(characters=chara_tag) | Q(similar_characters=chara_tag))
 
-    return render(request, 'main/search.html', {'images': images})
+    return render(request, 'main/search.html', {'images': images.order_by('-pk')})
 
 @csrf_exempt
 @require_POST
 def register_character(request):
-    print(request.body)
     data = json.loads(request.body)
     character, created = Character.objects.get_or_create(name_ja=data['character_name'])
     status = Status.objects.get(status_id=int(data['status_id']))
     image_entry = ImageEntry.objects.get(status=status, image_number=data['image_number'])
     image_entry.characters.add(character)
+    image_entry.confirmed = True
+    image_entry.save()
+    return JsonResponse({ "success": True, })
+
+@csrf_exempt
+@require_POST
+def delete_character(request):
+    data = json.loads(request.body)
+    character, created = Character.objects.get_or_create(name_ja=data['character_name'])
+    status = Status.objects.get(status_id=int(data['status_id']))
+    image_entry = ImageEntry.objects.get(status=status, image_number=data['image_number'])
+    image_entry.characters.remove(character)
+    image_entry.confirmed = False
     image_entry.save()
     return JsonResponse({ "success": True, })

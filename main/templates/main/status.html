@@ -12,7 +12,7 @@
   <div id="app" class="container">
     <ul class="list-inline">
       <li class="list-inline-item">
-          <a href="#" class="badge bg-primary rounded-pill text-decoration-none">@{{ screen_name }}</a>
+          <span class="badge bg-primary rounded-pill text-decoration-none">@{{ screen_name }}</span>
       </li>
       {% for hashtag in hashtags %}
       <li class="list-inline-item">
@@ -47,16 +47,24 @@
   {% if registered %}
     <h3 class="h5 mt-4">キャラクター名の登録</h3>
     <div v-if="similar_characters.length > 0">
-    <h4 class="h6 mt-4">正しい名前をクリックしてください</h4>
+    <p class="h6 mt-4">候補をクリックしてください</p>
     <ul class="list-inline mt-3">
       <li class="list-inline-item" v-for="name in similar_characters">
-        <span class="badge bg-secondary rounded-pill text-decoration-none">[[ name ]]</span>
+        <button class="btn btn-outline-secondary btn-sm" v-on:click="registerName(name)">[[ name ]]</button>
       </li>
     </ul>
-    <h4 class="h6 mt-4">候補にない場合は入力してください</h4>
+    <p class="h6 mt-4">正しい名前が候補にない場合は入力してください</p>
     </div>
+    {% if hashtags %}
+    <ul class="list-inline mt-3">
+        {% for hashtag in hashtags %}
+        <li class="list-inline-item">
+          <button class="btn btn-outline-primary btn-sm" v-on:click="registerName('{{ hashtag }}')">{{ hashtag }}</button>
+      </li>
+      {% endfor %}
+    </ul>
+    {% endif %}
     <div class="row gy-2 gx-3 align-items-center">
-        <input type="hidden" name="csrfmiddlewaretoken" value="rU3XoO576viBwlNdXsECPMhFizLJn1X0qGkjNPE6nv1WcbouMgwhkWrXfgfgVHeI">
         <div class="col-auto">
         <input type="text" class="form-control" v-bind="character_name" ref="input">
         </div>
@@ -69,6 +77,13 @@
       <div class="col-4 col-md-3 col-lg-2 my-1 px-1" v-for="sim in similar_images">
         <a v-bind:href="sim.status_url"><img class="img-fluid" v-bind:src="sim.media_url"></a></div>
     </div>
+    <h1 class="h5 mt-5">キャラクター情報の修正</h1>
+    <p class="h6 mt-4">削除するキャラクター名を選んでください</p>
+    <ul class="list-inline mt-3 mb-5">
+      <li class="list-inline-item" v-for="character in characters">
+        <button class="btn btn-secondary btn-sm" v-on:click="deleteName(character)">[[ character ]]</button>
+      </li>
+    </ul>
   </div>
   {% endif %}
 {% endblock %}
@@ -122,18 +137,30 @@ const app = Vue.createApp({
       this.rating = this.image_data[n].rating;
       this.media_url = this.image_data[n].media_url;
     },
-    submitInfo: function() {
-      console.log(this.$refs.input.value);
-      var name = this.$refs.input.value;
+    registerName: function(name) {
       axios.post('{% url 'register_character' %}', {
           status_id: "{{ status_id }}",
           image_number: this.image_number,
           character_name: name
       }).then(res => {
-          alert("キャラクター名が登録されました "+name);
+          alert("キャラクター名が登録されました（"+name+"）");
           this.characters.push(name);
       });
-    }
+    },
+    submitInfo: function() {
+      var name = this.$refs.input.value;
+      this.registerName(name);
+    },
+    deleteName: function(name) {
+      axios.post('{% url 'delete_character' %}', {
+          status_id: "{{ status_id }}",
+          image_number: this.image_number,
+          character_name: name
+      }).then(res => {
+          alert("キャラクター名を削除しました（"+name+"）");
+          this.characters = this.characters.filter(item => item != name);
+      });
+    },
   },
   compilerOptions: {
     delimiters: ["[[", "]]"]

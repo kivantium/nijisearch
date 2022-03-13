@@ -1,6 +1,5 @@
 from django.conf import settings
-
-from .models import I2VTag, HashTag, Author, Status, ImageEntry
+from .models import I2VTag, HashTag, Author, Status, ImageEntry, Character
 
 import tweepy
 import os
@@ -12,6 +11,7 @@ from urllib.parse import urlparse
 
 from PIL import Image
 import i2v
+import requests
 
 def get_twitter_api():
     consumer_key = settings.SOCIAL_AUTH_TWITTER_KEY
@@ -167,6 +167,24 @@ def register_status(status_id):
         if len(img_entry.i2vtags.all()) < 5:
             img_entry.collection = False
         img_entry.save()
+
+        # Add similar characters
+        res = requests.post(f'http://{settings.IMAGE_SEARCH_SERVER_IP}/search/', json={"media_url": img_entry.media_url}).json()
+        if res['success']:
+            character_names = []
+            indices = res['indices']
+            media_urls = res['media_urls']
+            for status_id, media_url in zip(indices, media_urls):
+                try:
+                    entry = ImageEntry.objects.get(media_url=media_url)
+                    character_names.extend([chara.name_ja for chara in entry.characters.all()])
+                except:
+                    pass
+            for name in list(set(character_names)):
+                tag, _ = Character.objects.get_or_create(name_ja=name)
+                img_entry.similar_characters.add(tag)
+            img_entry.save()
+
 
     status_entry.contains_illust = contains_illust
     img_entry = ImageEntry.objects.get(status = status_entry, image_number=0)

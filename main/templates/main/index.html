@@ -4,6 +4,45 @@
 
 {% block content %}
 <div class="container">
+  <form id="search" class="mt-5 row justify-content-center">
+    <div class="col">
+      <div class="form-group">
+        <input type="text" class="form-control" id="query" placeholder="検索クエリを入力">
+      </div>
+      <div class="form-group mt-2">
+        <div class="form-check form-check-inline">
+          <input class="form-check-input" type="radio" name="search_type" id="checkbox_keyword" value="keyword" checked>
+          <label class="form-check-label" for="checkbox_keyword">キーワード検索</label>
+        </div>
+        <div class="form-check form-check-inline">
+          <input class="form-check-input" type="radio" name="search_type" id="checkbox_tag" value="tag">
+          <label class="form-check-label" for="checkbox_tag">タグ検索</label>
+        </div>
+        <div class="form-check form-check-inline">
+          <input class="form-check-input" type="radio" name="search_type" id="checkbox_character" value="character">
+          <label class="form-check-label" for="checkbox_character">キャラクター検索</label>
+        </div>
+        <div class="form-check form-check-inline">
+          <input class="form-check-input" type="radio" name="search_type" id="checkbox_id" value="status_id">
+          <label class="form-check-label" for="checkbox_id">Tweet ID検索</label>
+        </div>
+      </div>
+    </div>
+    <div class="col-auto">
+      <button type="submit" class="btn btn-secondary mb-2">検索</button>
+    </div>
+  </form>
+  <a class="btn btn-outline-secondary btn-sm my-3" data-bs-toggle="collapse" href="#description" role="button" aria-expanded="false" aria-controls="description">検索について</a>
+  <div class="collapse" id="description">
+    <dl>
+      <dt>キーワード検索</dt><dl>登録されたツイートをキーワードで全文検索します。AND検索等には対応していないので、スペースも含めてそのまま検索されます。</dl>
+      <dt>I2Vタグ検索</dt><dl>Illustration2Vecによってつけられたタグで検索します。タグを<code>;</code>で区切るとAND検索ができます。スペースにも意味があるので気をつけてください。ハッシュタグ検索はキーワード検索で代用してください</dl>
+      <dt>キャラクター検索検索 (New)</dt><dl>登録されたキャラクター名で検索します。近傍探索でキャラクターが推定された画像は検索結果に赤枠つきで表示されます。</dl>
+    </dt>
+      <dt>Tweet ID検索</dt><dl>Tweet IDで検索します。IDは各ツイートのURLから分かります ( <code>https://twitter.com/username/status/XXXXXXXXXXXXXXXXXXX</code> の <code>XXXXXX</code> )<br>登録されていない画像ツイートを検索すると新しく登録されます。</dl>
+    </dt>
+  </div>
+
   <h2 class="h5 mt-5">新しく登録されたイラスト</h2>
   <hr>
   <div class="mt-4 row">
@@ -17,6 +56,24 @@
 {% endblock %}
 
 {% block script %}
+<script
+  src="https://code.jquery.com/jquery-3.6.0.slim.min.js"
+  integrity="sha256-u7e5khyithlIdTpu22PHhENmPcRdFiHRjhAuHcs05RI="
+  crossorigin="anonymous"></script>
 <script>
+$('#search').submit(function(){
+    const search_type = $('input:radio[name="search_type"]:checked').val();
+    const query = $('#query').val();
+    if (search_type == "tag") {
+      location.href = "{% url 'search' %}?i2vtags=" + encodeURIComponent(query);
+    } else if(search_type == "keyword"){
+      location.href = "{% url 'search' %}?keyword=" + encodeURIComponent(query);
+    } else if(search_type == "character"){
+      location.href = "{% url 'search' %}?character=" + encodeURIComponent(query);
+    } else {
+      location.href = "/status/" + query;
+    }
+    return false;
+})
 </script>
 {% endblock %}
