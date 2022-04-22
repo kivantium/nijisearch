@@ -53,7 +53,7 @@ def get_images(request, status_id):
     for entry in image_entries:
         rating = entry.i2vtags.get(tag_type='RA')
         i2vtags = [tag.name for T in ['GE', 'CO', 'CH'] for tag in entry.i2vtags.filter(tag_type=T)]
-        characters = [chara.name_ja for chara in entry.characters.all()]
+        characters = [c.name_ja if c.name_ja != "" else c.name_en for c in entry.characters.all()]
 
         data.append({
             "media_url": entry.media_url,
@@ -123,7 +123,10 @@ def search(request):
         try:
             chara_tag = Character.objects.get(name_ja=character)
         except Character.DoesNotExist:
-            return render(request, 'main/search.html', {'empty': True})
+            try:
+                chara_tag = Character.objects.get(name_en=character)
+            except Character.DoesNotExist:
+                return render(request, 'main/search.html', {'empty': True})
         if only_confirmed:
             images = images.filter(characters=chara_tag)
         else:
@@ -135,13 +138,22 @@ def search(request):
 @require_POST
 def register_character(request):
     data = json.loads(request.body)
-    character, created = Character.objects.get_or_create(name_ja=data['character_name'])
-    status = Status.objects.get(status_id=int(data['status_id']))
-    image_entry = ImageEntry.objects.get(status=status, image_number=data['image_number'])
-    image_entry.characters.add(character)
-    image_entry.confirmed = True
-    image_entry.save()
-    return JsonResponse({ "success": True, })
+    if "name_ja" in data:
+        character, _ = Character.objects.get_or_create(name_ja=data['name_ja'])
+    elif "name_en" in data:
+        character, _ = Character.objects.get_or_create(name_en=data['name_en'])
+    else:
+        return JsonResponse({ "success": False, })
+
+    try:
+        status = Status.objects.get(status_id=int(data['status_id']))
+        image_entry = ImageEntry.objects.get(status=status, image_number=data['image_number'])
+        image_entry.characters.add(character)
+        image_entry.confirmed = True
+        image_entry.save()
+        return JsonResponse({ "success": True, })
+    except:
+        return JsonResponse({ "success": False, })
 
 @csrf_exempt
 @require_POST

@@ -18,7 +18,7 @@ class HashTag(models.Model):
         return self.name
 
 class Character(models.Model):
-    name_ja = models.TextField(unique=True)
+    name_ja = models.TextField()
     name_en = models.TextField()
 
     def __str__(self):
