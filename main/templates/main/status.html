@@ -141,10 +141,14 @@ const app = Vue.createApp({
       axios.post('{% url 'register_character' %}', {
           status_id: "{{ status_id }}",
           image_number: this.image_number,
-          character_name: name
+          name_ja: name
       }).then(res => {
-          alert("キャラクター名が登録されました（"+name+"）");
-          this.characters.push(name);
+	  if (res.data.success) {
+            alert("キャラクター名が登録されました（"+name+"）");
+            this.characters.push(name);
+	  } else {
+            alert("キャラクター名の登録に失敗しました（"+name+"）");
+	  }
       });
     },
     submitInfo: function() {
@@ -155,10 +159,14 @@ const app = Vue.createApp({
       axios.post('{% url 'delete_character' %}', {
           status_id: "{{ status_id }}",
           image_number: this.image_number,
-          character_name: name
+          name: name
       }).then(res => {
-          alert("キャラクター名を削除しました（"+name+"）");
-          this.characters = this.characters.filter(item => item != name);
+	  if (res.data.success) {
+            alert("キャラクター名を削除しました（"+name+"）");
+            this.characters = this.characters.filter(item => item != name);
+	  } else {
+            alert("キャラクター名の削除に失敗しました（"+name+"）");
+	  }
       });
     },
   },

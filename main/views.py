@@ -53,7 +53,7 @@ def get_images(request, status_id):
     for entry in image_entries:
         rating = entry.i2vtags.get(tag_type='RA')
         i2vtags = [tag.name for T in ['GE', 'CO', 'CH'] for tag in entry.i2vtags.filter(tag_type=T)]
-        characters = [c.name_ja if c.name_ja != "" else c.name_en for c in entry.characters.all()]
+        characters = [c.name_ja + c.name_en for c in entry.characters.all()]
 
         data.append({
             "media_url": entry.media_url,
@@ -159,7 +159,13 @@ def register_character(request):
 @require_POST
 def delete_character(request):
     data = json.loads(request.body)
-    character, created = Character.objects.get_or_create(name_ja=data['character_name'])
+    try:
+        character = Character.objects.get(name_en=data['name'])
+    except Character.DoesNotExist:
+        try:
+            character = Character.objects.get(name_ja=data['name'])
+        except Character.DoesNotExist:
+            return JsonResponse({ "success": False, })
     status = Status.objects.get(status_id=int(data['status_id']))
     image_entry = ImageEntry.objects.get(status=status, image_number=data['image_number'])
     image_entry.characters.remove(character)
