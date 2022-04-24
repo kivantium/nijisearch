@@ -159,14 +159,13 @@ def register_status(status_id):
         # Reject monochrome image or photo
         names = ['monochrome', 'photo']
         for tag_name in names:
-            t = I2VTag.objects.get_or_create(name=tag_name)
+            t, _ = I2VTag.objects.get_or_create(name=tag_name, tag_type='GE')
             if t in img_entry.i2vtags.all():
                 img_entry.collection = False
 
         # Illustration usually contains more than 5 tags.
         if len(img_entry.i2vtags.all()) < 5:
             img_entry.collection = False
-        img_entry.save()
 
         # Add similar characters
         res = requests.post(f'http://{settings.IMAGE_SEARCH_SERVER_IP}/search/', json={"media_url": img_entry.media_url}).json()
@@ -183,8 +182,7 @@ def register_status(status_id):
             for name in list(set(character_names)):
                 tag, _ = Character.objects.get_or_create(name_ja=name)
                 img_entry.similar_characters.add(tag)
-            img_entry.save()
-
+        img_entry.save()
 
     status_entry.contains_illust = contains_illust
     img_entry = ImageEntry.objects.get(status = status_entry, image_number=0)
