@@ -53,7 +53,7 @@
         <button class="btn btn-outline-secondary btn-sm" v-on:click="registerName(name)">[[ name ]]</button>
       </li>
     </ul>
-    <p class="h6 mt-4">正しい名前が候補にない場合は入力してください</p>
+    <p class="h6 mt-4">正しい名前が候補にない場合はキャラクター名を英語で入力してください</p>
     </div>
     {% if hashtags %}
     <ul class="list-inline mt-3">
@@ -141,7 +141,7 @@ const app = Vue.createApp({
       axios.post('{% url 'register_character' %}', {
           status_id: "{{ status_id }}",
           image_number: this.image_number,
-          name_ja: name
+          name_en: name
       }).then(res => {
 	  if (res.data.success) {
             alert("キャラクター名が登録されました（"+name+"）");

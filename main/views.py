@@ -15,8 +15,13 @@ import itertools
 import json
 
 def index(request):
-    status_list = Status.objects.all().order_by('-pk')[:120]
-    return render(request, 'main/index.html', {'status_list': status_list})
+    status_list = Status.objects.filter(contains_illust=True).order_by('-pk')[:120]
+    status_count = len(Status.objects.all())
+    character_count = len(Character.objects.all())
+    return render(request, 'main/index.html', {
+        'status_list': status_list,
+        'status_count': status_count,
+        'character_count': character_count})
 
 def about(request):
     return HttpResponse('About')
@@ -80,7 +85,7 @@ def get_similar_images(request):
                                     "media_url": media_url})
             try:
                 entry = ImageEntry.objects.get(media_url=media_url)
-                character_names.extend([chara.name_ja for chara in entry.characters.all()])
+                character_names.extend([chara.name_en for chara in entry.characters.all()])
             except:
                 pass
         similar_characters = list(set(character_names))

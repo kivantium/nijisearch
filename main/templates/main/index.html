@@ -4,7 +4,12 @@
 
 {% block content %}
 <div class="container">
-  <form id="search" class="mt-5 row justify-content-center">
+  <ul class="my-4">
+    <li>現在登録されているツイート数: {{ status_count }}</li>
+    <li>現在登録されているキャラクター数: {{ character_count }}</li>
+  </ul>
+
+  <form id="search" class="mt-3 row justify-content-center">
     <div class="col">
       <div class="form-group">
         <input type="text" class="form-control" id="query" placeholder="検索クエリを入力">
