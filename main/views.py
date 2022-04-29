@@ -16,8 +16,8 @@ import json
 
 def index(request):
     status_list = Status.objects.filter(contains_illust=True).order_by('-pk')[:120]
-    status_count = len(Status.objects.all())
-    character_count = len(Character.objects.all())
+    status_count = Status.objects.count()
+    character_count = Character.objects.count()
     return render(request, 'main/index.html', {
         'status_list': status_list,
         'status_count': status_count,
