@@ -20,7 +20,7 @@
       </li>
       {% endfor %}
     </ul>
-    <ul class="list-inline mt-3">
+    <ul class="list-inline mt-3 v-cloak">
       <li class="list-inline-item">
         <a v-bind:href="'/search/?i2vtags='+rating" class="badge bg-secondary rounded-pill text-decoration-none">[[ rating ]]</a>
       </li>
@@ -28,7 +28,7 @@
         <a v-bind:href="'/search/?i2vtags='+tag" class="badge bg-secondary rounded-pill text-decoration-none">[[ tag ]]</a>
       </li>
     </ul>
-    <ul class="list-inline mt-3">
+    <ul class="list-inline mt-3 v-cloak">
       <li class="list-inline-item" v-for="character in characters">
         <a v-bind:href="'/search/?character='+character" class="badge bg-success rounded-pill text-decoration-none">[[ character ]]</a>
       </li>
