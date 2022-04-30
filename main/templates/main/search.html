@@ -15,9 +15,10 @@
   {% endif %}
   <div class="mt-4 row g-0">
     {% for image in images %}
-    <div class="col-6 col-sm-4 col-md-3 col-lg-2">
+    <div class="col-6 col-sm-4 col-md-3 col-lg-2 position-relative">
         <a href="{% url 'status' image.status.status_id %}?n={{ image.image_number }}"><img class="w-100 img-thumbnail" src="{{image.media_url}}:thumb"></a>
-      </div>
+	{% if not image.confirmed %}<span class="position-absolute top-0 start-0 badge rounded-pill bg-danger">Unknown</span>{% endif %}
+    </div>
     {% endfor %}
   </div>
   <div class="mt-3 pb-5">
