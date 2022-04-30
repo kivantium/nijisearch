@@ -13,6 +13,7 @@ import requests
 import threading
 import itertools
 import json
+from urllib.parse import urlparse, quote
 
 def index(request):
     status_list = Status.objects.filter(contains_illust=True).order_by('-pk')[:120]
@@ -108,36 +109,52 @@ def search(request):
     only_confirmed = True if only_confirmed == 't' else False
 
     images = ImageEntry.objects.all()
+    query = ""
     if i2vtags is not None:
-        for tag_name in i2vtags.split(';'):
+        query += f"&i2vtags={quote(i2vtags)}"
+        i2vtags = i2vtags.split(';')
+        for tag_name in i2vtags:
             try:
                 tag = I2VTag.objects.get(name=tag_name)
             except I2VTag.DoesNotExist:
-                return render(request, 'main/search.html', {'empty': True})
+                return render(request, 'main/search.html', {'i2vtags': i2vtags, 'notfound': True})
             images = images.filter(i2vtags=tag)
     if hashtags is not None:
+        query += f"&hashtags={quote(hashtags)}"
         status_list = Status.objects.all()
         for tag_name in hashtags.split(';'):
             try:
                 tag = HashTag.objects.get(name=tag_name)
             except HashTag.DoesNotExist:
-                return render(request, 'main/search.html', {'empty': True})
+                return render(request, 'main/search.html', {'notfound': True})
             status_list = status_list.filter(hashtags=tag)
         images = images.filter(status__in=status_list)
     if character is not None:
+        query += f"&character={quote(character)}"
         try:
             chara_tag = Character.objects.get(name_ja=character)
         except Character.DoesNotExist:
             try:
                 chara_tag = Character.objects.get(name_en=character)
             except Character.DoesNotExist:
-                return render(request, 'main/search.html', {'empty': True})
+                return render(request, 'main/search.html', {'character': character, 'notfound': True})
         if only_confirmed:
             images = images.filter(characters=chara_tag)
         else:
             images = images.filter(Q(characters=chara_tag) | Q(similar_characters=chara_tag))
 
-    return render(request, 'main/search.html', {'images': images.order_by('-pk')})
+    images_per_page = 120
+    images_count = images.count()
+    last_page = -(-images_count // images_per_page)  # round up
+    prev_page = request.path + f'?{query}&page={page-1}' if page != 1 else None
+    next_page = request.path + f'?{query}&page={page+1}' if page != last_page else None
+
+    images = images.order_by('-pk')[images_per_page*(page-1):images_per_page*page]
+
+    return render(request, 'main/search.html', 
+            {'images': images, 'images_count': images_count,
+             'i2vtags': i2vtags, 'character': character,
+             'prev_page': prev_page, 'next_page': next_page})
 
 @csrf_exempt
 @require_POST
