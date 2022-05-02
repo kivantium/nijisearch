@@ -47,23 +47,17 @@
   {% if registered %}
     <h3 class="h5 mt-4">キャラクター名の登録</h3>
     <div v-if="similar_characters.length > 0">
-    <p class="h6 mt-4">候補をクリックしてください</p>
-    <ul class="list-inline mt-3">
-      <li class="list-inline-item" v-for="name in similar_characters">
-        <button class="btn btn-outline-secondary btn-sm" v-on:click="registerName(name)">[[ name ]]</button>
-      </li>
-    </ul>
-    <p class="h6 mt-4">正しい名前が候補にない場合はキャラクター名を英語で入力してください</p>
+      <p class="h6 mt-4">候補をクリックしてください</p>
+      <ul class="list-inline mt-3">
+        <li class="list-inline-item" v-for="name in similar_characters">
+          <button class="btn btn-outline-secondary btn-sm" v-on:click="registerName(name)">[[ name ]]</button>
+        </li>
+      </ul>
+      <p class="h6 mt-4">正しい名前が候補にない場合はキャラクター名を英語で入力してください</p>
     </div>
-    {% if hashtags %}
-    <ul class="list-inline mt-3">
-        {% for hashtag in hashtags %}
-        <li class="list-inline-item">
-          <button class="btn btn-outline-primary btn-sm" v-on:click="registerName('{{ hashtag }}')">{{ hashtag }}</button>
-      </li>
-      {% endfor %}
-    </ul>
-    {% endif %}
+    <div v-else>
+      <p class="h6 mt-4">キャラクター名を英語で入力してください</p>
+     </div>
     <div class="row gy-2 gx-3 align-items-center">
         <div class="col-auto">
         <input type="text" class="form-control" v-bind="character_name" ref="input">

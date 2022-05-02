@@ -9,6 +9,7 @@ from django.db.models import Q
 from .utils import register_status
 from .models import Status, ImageEntry, I2VTag, HashTag, Character
 
+import collections
 import requests
 import threading
 import itertools
@@ -78,7 +79,7 @@ def get_similar_images(request):
     res = requests.post(f'http://{settings.IMAGE_SEARCH_SERVER_IP}/search/', json={"media_url": media_url}).json()
     if res['success']:
         similar_images = []
-        character_names = []
+        names = []
         indices = res['indices']
         media_urls = res['media_urls']
         for status_id, media_url in zip(indices, media_urls):
@@ -86,10 +87,12 @@ def get_similar_images(request):
                                     "media_url": media_url})
             try:
                 entry = ImageEntry.objects.get(media_url=media_url)
-                character_names.extend([chara.name_en for chara in entry.characters.all()])
+                names.extend([chara.name_en for chara in entry.characters.all()])
             except:
                 pass
-        similar_characters = list(set(character_names))
+        count = collections.Counter(names)
+        freq_index = [(-count[name], names.index(name), name) for name in set(names)]
+        similar_characters = [c[2] for c in sorted(freq_index)]
         return JsonResponse({"success": True, "similar_images": similar_images,
                              "similar_characters": similar_characters})
     else:
