@@ -10,11 +10,14 @@ from .utils import register_status
 from .models import Status, ImageEntry, I2VTag, HashTag, Character
 
 import collections
+import os
+import csv
 import requests
 import threading
 import itertools
 import json
 from urllib.parse import urlparse, quote
+import random
 
 def index(request):
     status_list = Status.objects.filter(contains_illust=True).order_by('-pk')[:120]
@@ -27,6 +30,20 @@ def index(request):
 
 def about(request):
     return HttpResponse('About')
+
+def quiz(request):
+    quiz_csv = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'quiz.csv')
+    characters = []
+    questions = []
+    with open(quiz_csv, newline='') as f:
+        reader = csv.reader(f)
+        for row in reader:
+            questions.append({"character": row[1], "status_id": row[2], "media_url": row[3]})
+            characters.append(row[1])
+    characters = list(set(characters))
+    return render(request, 'main/quiz.html', {
+        'questions': random.sample(questions, 100),
+        'characters': characters})
 
 def register(request, status_id):
     res = register_status(status_id)

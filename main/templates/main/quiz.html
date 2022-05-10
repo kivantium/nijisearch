@@ -1,0 +1,56 @@
+{% extends 'main/base.html' %}
+
+{% block page_title%}にじさーち{% endblock %}
+
+{% block content %}
+<div class="container">
+  <h2 class="h5 mt-5">キャラクター当てクイズ</h2>
+  <hr>
+  <div id="main" class="mt-4 row g-1">
+    {% for question in questions %}
+      <div class="col-3">
+          <a href="{% url 'status' question.status_id %}"><img class="w-100 img-thumbnail" src="{{question.media_url}}"></a>
+      </div>
+      <div class="col-3">
+        <input type="text" id="question{{forloop.counter0}}" class="form-control" autocomplete="on" list="characters">
+        <input type="hidden" id="answer{{forloop.counter0}}" value="{{question.character}}">
+	<p id="result{{forloop.counter0}}"></p>
+      </div>
+
+    {% endfor %}
+  </div>
+  <datalist id="characters">  
+  {% for character in characters %}
+  <option value="{{ character }}">
+  {% endfor %}
+  </datalist>
+  <button id="submit" class="btn btn-primary">提出する</button>
+  <p>正解数: <span id="ratio"></span>/100</p>
+</div>
+{% endblock %}
+
+{% block script %}
+<script
+  src="https://code.jquery.com/jquery-3.6.0.slim.min.js"
+  integrity="sha256-u7e5khyithlIdTpu22PHhENmPcRdFiHRjhAuHcs05RI="
+  crossorigin="anonymous"></script>
+<script>
+$(function() {
+  $("#submit").click(function() {
+  var point = 0;
+  for (let i=0; i<100; i++) {
+    var answer = $("#question"+i).val();
+    var correct = $("#answer"+i).val();
+    if(answer == correct) {
+        point += 1;
+        $("#result"+i).text("正解");
+    } else {
+        $("#result"+i).text("不正解");
+    }
+  }
+   $("#ratio").text(point);  
+    return false;
+  });
+});
+</script>
+{% endblock %}
