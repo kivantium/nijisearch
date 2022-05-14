@@ -1,0 +1,56 @@
+{% extends 'main/base.html' %}
+
+{% block page_title%}キャラクター名翻訳画面{% endblock %}
+
+{% block content %}
+<div class="container">
+  {% for character in characters %}
+  <form id="search" class="mt-3 row justify-content-center">
+    <div class="col-4 col-lg-3">
+    <a href="{% url 'search' %}?character={{ character.name_en }}" target="_blank" rel="noopener noreferrer">{{ character.name_en }}</a>
+    </div>
+    <div class="col-6 col-lg-4">
+      <div class="form-group">
+	<input type="text" class="form-control name_ja" placeholder="{{ character.name_ja }}">
+      </div>
+    </div>
+    <input type="hidden" class="pk" value="{{ character.pk }}">
+    <div class="col-auto">
+      <button type="submit" class="btn btn-primary mb-2">送信</button>
+    </div>
+  </form>
+  {% endfor %}
+
+  <div class="mt-3 pb-5">
+  {% if page > 0 %}<a class="float-start" href="{% url 'translate' %}?page={{ page | add:-1 }}">前のページ</a>{% endif %}
+  <a class="float-end" href="{% url 'translate' %}?page={{ page | add:1 }}">次のページ</a>
+  </div>
+</div>
+{% endblock %}
+
+{% block script %}
+<script
+  src="https://code.jquery.com/jquery-3.6.0.slim.min.js"
+  integrity="sha256-u7e5khyithlIdTpu22PHhENmPcRdFiHRjhAuHcs05RI="
+  crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+<script>
+$('form').submit(function(e){
+  e.preventDefault();
+  var name_ja = $(this).find('.name_ja').val()
+  axios.post('{% url 'translate_request' %}', {
+      pk: $(this).find('.pk').val(),
+      name_ja: name_ja,
+  }).then(res => {
+      console.log(res.data);
+      if (res.data.success) {
+	alert("日本語名の登録に成功しました（" + name_ja + "）");
+	$(this).find('button').removeClass('btn-primary').addClass('btn-secondary');
+      } else {
+	alert("キャラクター名の登録に失敗しました");
+      }
+  });
+  return false;
+})
+</script>
+{% endblock %}

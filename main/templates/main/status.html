@@ -30,7 +30,10 @@
     </ul>
     <ul class="list-inline mt-3 v-cloak">
       <li class="list-inline-item" v-for="character in characters">
-        <a v-bind:href="'/search/?character='+character" class="badge bg-success rounded-pill text-decoration-none">[[ character ]]</a>
+        <a v-bind:href="'/search/?character='+character.name_en" class="badge bg-success rounded-pill text-decoration-none">
+          <span v-if='character.name_ja == ""'>[[ character.name_en ]]</span>
+          <span v-else>[[ character.name_ja ]]</span>
+        </a>
       </li>
     </ul>
     <div class="row justify-content-center">
@@ -75,7 +78,10 @@
     <p class="h6 mt-4">削除するキャラクター名を選んでください</p>
     <ul class="list-inline mt-3 mb-5">
       <li class="list-inline-item" v-for="character in characters">
-        <button class="btn btn-secondary btn-sm" v-on:click="deleteName(character)">[[ character ]]</button>
+        <button class="btn btn-secondary btn-sm" v-on:click="deleteName(character.name_en)">
+          <span v-if='character.name_ja == ""'>[[ character.name_en ]]</span>
+          <span v-else>[[ character.name_ja ]]</span>
+        </button>
       </li>
     </ul>
   </div>
@@ -139,7 +145,8 @@ const app = Vue.createApp({
       }).then(res => {
 	  if (res.data.success) {
             alert("キャラクター名が登録されました（"+name+"）");
-            this.characters.push(name);
+            var character = {name_en: name, name_ja: ""};
+            this.characters.push(character);
 	  } else {
             alert("キャラクター名の登録に失敗しました（"+name+"）");
 	  }
@@ -157,7 +164,7 @@ const app = Vue.createApp({
       }).then(res => {
 	  if (res.data.success) {
             alert("キャラクター名を削除しました（"+name+"）");
-            this.characters = this.characters.filter(item => item != name);
+            this.characters = this.characters.filter(item => item.name_en != name);
 	  } else {
             alert("キャラクター名の削除に失敗しました（"+name+"）");
 	  }
