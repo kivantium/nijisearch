@@ -52,8 +52,16 @@ def quiz(request):
     with open(quiz_csv, newline='') as f:
         reader = csv.reader(f)
         for row in reader:
-            questions.append({"character": row[1], "status_id": row[2], "media_url": row[3]})
-            characters.append(row[1])
+            try:
+                character = Character.objects.get(name_en=row[1])
+            except:
+                continue
+            if character.name_ja != "":
+                name = f"{character.name_ja} | {character.name_en}"
+            else:
+                name = f"{character.name_en}"
+            questions.append({"character": name, "status_id": row[2], "media_url": row[3]})
+            characters.append(name)
     characters = list(set(characters))
     return render(request, 'main/quiz.html', {
         'questions': random.sample(questions, 100),
