@@ -5,11 +5,47 @@
 {% block content %}
 <div class="container">
   {% if i2vtags or character or notfound %}
-	<h2 class="h5 mt-5">{% for tag in i2vtags %}<span class="badge bg-secondary rounded-pill">{{ tag }}</span> {% endfor %}{% if character %}<span class="badge bg-success rounded-pill">{{ character }}</span> {% endif %}の検索結果<small>（{{ images_count | default:"0"}} 枚）</small></h2>
+  <h2 class="h5 mt-5">
+    {% for tag in i2vtags %}<span class="badge bg-secondary rounded-pill">{{ tag }}</span> {% endfor %}
+    {% if character %}<span class="badge bg-success rounded-pill">{% if character.name_ja %}{{ character.name_ja }}{% else %}{{ character.name_en }}{% endif %}</span>{% endif %}
+    の検索結果<small>（{{ images_count | default:"0"}} 枚）</small></h2>
   {% else %}
-	<h2 class="h5 mt-5">全ての画像<small>（{{ images_count }} 枚）</small></h2>
+  <h2 class="h5 mt-5">全ての画像<small>（{{ images_count }} 枚）</small></h2>
   {% endif %}
+  {% if character %}
+  {% if character.name_ja %}
+  <div class="mt-2 ms-2">
+    <div>英語表記 <code>{{ character.name_en }}</code></div>
+    <div class="mt-1">
+      <a href="https://dic.pixiv.net/a/{{ character.name_ja }}">ピクシブ百科事典で調べる</a>
+      <a class="ms-2" href="https://dic.nicovideo.jp/a/{{ character.name_ja }}">ニコニコ大百科で調べる</a>
+      <button class="btn btn-link" type="button" data-bs-toggle="collapse" data-bs-target="#translation_form" aria-expanded="false" aria-controls="translation_form">キャラクター情報を編集する</button>
+    </div>
+  </div>
+  {% else %}
+  <div class="mt-1">
+  <button class="btn btn-link" type="button" data-bs-toggle="collapse" data-bs-target="#translation_form" aria-expanded="false" aria-controls="translation_form">キャラクター情報を編集する</button>
+  </div>
+  {% endif %}
+  <div class="collapse" id="translation_form">
   <hr>
+    <form class="row mt-3">
+      <div class="col-auto">
+        <div class="input-group input-group-sm">
+          <div class="input-group-prepend">
+            <span class="input-group-text" id="inputGroup-sizing-sm">日本語表記</span>
+          </div>
+  	<input type="text" class="form-control name_ja" id="translation" value="{{character.name_ja}}">
+        </div>
+      </div>
+      <div class="col-auto">
+        <input type="hidden" class="pk" value="{{ character.pk }}">
+        <button type="submit" class="btn btn-primary mb-2">送信</button>
+      </div>
+    </form>
+    <hr>
+  </div>
+  {% endif %}
   {% if notfound %}
   <p>該当する画像がありませんでした</p>
   {% endif %}
@@ -29,6 +65,28 @@
 {% endblock %}
 
 {% block script %}
+<script
+  src="https://code.jquery.com/jquery-3.6.0.slim.min.js"
+  integrity="sha256-u7e5khyithlIdTpu22PHhENmPcRdFiHRjhAuHcs05RI="
+  crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
 <script>
+$('form').submit(function(e){
+  e.preventDefault();
+  var name_ja = $(this).find('.name_ja').val()
+  axios.post('{% url 'translate_request' %}', {
+      pk: $(this).find('.pk').val(),
+      name_ja: name_ja,
+  }).then(res => {
+      console.log(res.data);
+      if (res.data.success) {
+	alert("日本語名の登録に成功しました（" + name_ja + "）");
+	$(this).find('button').removeClass('btn-primary').addClass('btn-secondary');
+      } else {
+	alert("キャラクター名の登録に失敗しました");
+      }
+  });
+  return false;
+})
 </script>
 {% endblock %}

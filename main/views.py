@@ -171,19 +171,20 @@ def search(request):
                 return render(request, 'main/search.html', {'notfound': True})
             status_list = status_list.filter(hashtags=tag)
         images = images.filter(status__in=status_list)
+    character_tag = None
     if character is not None:
         query += f"&character={quote(character)}"
         try:
-            chara_tag = Character.objects.get(name_ja=character)
+            character_tag = Character.objects.get(name_en=character)
         except Character.DoesNotExist:
             try:
-                chara_tag = Character.objects.get(name_en=character)
+                character_tag = Character.objects.get(name_ja=character)
             except Character.DoesNotExist:
                 return render(request, 'main/search.html', {'character': character, 'notfound': True})
         if only_confirmed:
-            images = images.filter(characters=chara_tag)
+            images = images.filter(characters=character_tag)
         else:
-            images = images.filter(Q(characters=chara_tag) | Q(similar_characters=chara_tag))
+            images = images.filter(Q(characters=character_tag) | Q(similar_characters=character_tag))
 
     images_per_page = 120
     images_count = images.count()
@@ -195,7 +196,7 @@ def search(request):
 
     return render(request, 'main/search.html', 
             {'images': images, 'images_count': images_count,
-             'i2vtags': i2vtags, 'character': character,
+             'i2vtags': i2vtags, 'character': character_tag,
              'prev_page': prev_page, 'next_page': next_page})
 
 @csrf_exempt
