@@ -4,7 +4,7 @@ from django.core import serializers
 from django.conf import settings
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
-from django.db.models import Q
+from django.db.models import Count, Q
 
 from .utils import register_status
 from .models import Status, ImageEntry, I2VTag, HashTag, Character
@@ -24,6 +24,20 @@ def index(request):
         'status_list': status_list,
         'status_count': status_count,
         'character_count': character_count})
+
+def translate(request):
+    page = int(request.GET.get('page', default='0'))
+    characters = Character.objects.all().annotate(count=Count('characters')).order_by('-count')[100*page:100*(page+1)]
+    return render(request, 'main/translate.html', {'characters': characters, 'page': page})
+
+@csrf_exempt
+@require_POST
+def translate_request(request):
+    data = json.loads(request.body)
+    character = Character.objects.get(pk=data['pk'])
+    character.name_ja = data['name_ja']
+    character.save()
+    return JsonResponse({ "success": True, "message": character.name_en + " is succesfully transtaled: " + character.name_ja })
 
 def about(request):
     return HttpResponse('About')
@@ -60,7 +74,7 @@ def get_images(request, status_id):
     for entry in image_entries:
         rating = entry.i2vtags.get(tag_type='RA')
         i2vtags = [tag.name for T in ['GE', 'CO', 'CH'] for tag in entry.i2vtags.filter(tag_type=T)]
-        characters = [c.name_ja + c.name_en for c in entry.characters.all()]
+        characters = [{"name_ja": c.name_ja, "name_en": c.name_en} for c in entry.characters.all()]
 
         data.append({
             "media_url": entry.media_url,
