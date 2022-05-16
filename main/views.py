@@ -7,7 +7,7 @@ from django.views.decorators.http import require_POST
 from django.db.models import Count, Q
 
 from .utils import register_status
-from .models import Status, ImageEntry, I2VTag, HashTag, Character
+from .models import Author, Status, ImageEntry, I2VTag, HashTag, Character
 
 import collections
 import requests
@@ -41,6 +41,19 @@ def translate_request(request):
 
 def about(request):
     return HttpResponse('About')
+
+def author(request, screen_name):
+    print(screen_name)
+    try:
+        author = Author.objects.get(screen_name=screen_name)
+    except:
+        return HttpResponse('Not found')
+    image_entry_list = ImageEntry.objects.filter(author=author)
+    image_count = image_entry_list.count()
+    return render(request, 'main/author.html', {
+        'author': author,
+        'image_entry_list': image_entry_list,
+        'image_count': image_count})
 
 def register(request, status_id):
     res = register_status(status_id)

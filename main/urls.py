@@ -6,6 +6,7 @@ urlpatterns = [
     path('', views.index, name='index'),
     path('about', views.about, name='about'),
     path('register/<int:status_id>', views.register, name='register'),
+    path('author/<str:screen_name>', views.author, name='author'),
     path('search/', views.search, name='search'),
     path('translate/', views.translate, name='translate'),
     path('translate_request/', views.translate_request, name='translate_request'),
