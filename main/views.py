@@ -47,28 +47,49 @@ def about(request):
 
 def quiz(request):
     quiz_csv = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'quiz.csv')
-    characters = []
+    translations = {}
     questions = []
+    characters = []
     with open(quiz_csv, newline='') as f:
         reader = csv.reader(f)
         for row in reader:
-            try:
-                character = Character.objects.get(name_en=row[1])
-            except:
-                continue
-            if character.name_ja != "":
-                name = f"{character.name_ja} | {character.name_en}"
+            if row[1] in translations:  	
+                name = translations[row[1]]
             else:
-                name = f"{character.name_en}"
+                try:
+                    character = Character.objects.get(name_en=row[1])
+                except:
+                    continue
+                if character.name_ja != "":
+                    name = f"{character.name_ja} | {character.name_en}"
+                else:
+                    name = f"{character.name_en}"
+                    characters.append(name)
+                translations[row[1]] = name
             questions.append({"character": name, "status_id": row[2], "media_url": row[3]})
-            characters.append(name)
-    characters = list(set(characters))
     return render(request, 'main/quiz.html', {
         'questions': random.sample(questions, 100),
         'characters': characters})
 
-def author(request, screen_name):
-    print(screen_name)
+def study(request):
+    study_csv = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'study.csv')
+    images = {}
+    with open(study_csv, newline='') as f:
+        reader = csv.reader(f)
+        for row in reader:
+            name = row[1]
+            data = {"status_id": row[2], "media_url": row[3]}
+            if name in images:  	
+                images[name].append(data)
+            else:
+                images[name] = [data]
+    character_list = []
+    for name in images:
+        character_list.append({"name": name, "image_list": images[name]})
+    return render(request, 'main/study.html', {
+        'character_list': character_list})
+
+def author(request):
     try:
         author = Author.objects.get(screen_name=screen_name)
     except:
