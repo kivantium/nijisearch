@@ -11,9 +11,10 @@
   {% else %}
   <div id="app" class="container">
     <ul class="list-inline">
-      <li class="list-inline-item">
-	<a class="badge bg-primary rounded-pill text-decoration-none" href="{% url 'author' screen_name %}">@{{ screen_name }}</span>
-      </li>
+      <li class="list-inline-item"><a class="badge bg-primary rounded-pill text-decoration-none" href="{% url 'author' screen_name %}">@{{ screen_name }}</a></li>
+      <li class="list-inline-item"><span class="badge bg-danger rounded-pill" v-if="!collection">未収載</span></li>
+    </ul>
+    <ul class="list-inline">
       {% for hashtag in hashtags %}
       <li class="list-inline-item">
           <a href="/search/?hashtags={{ hashtag }}" class="badge bg-info rounded-pill text-decoration-none">#{{ hashtag }}</a>
@@ -89,13 +90,17 @@
     <form @submit="formSubmit">
       {% csrf_token %}
       <div class="form-group">
-        <div class="form-check form-check-inline">
-          <input class="form-check-input" type="radio" v-model="report_type" id="radio_illust" value="not_illust">
-          <label class="form-check-label" for="radio_illust">この画像はイラストではありません</label>
+        <div class="form-check form-check-inline" v-if="collection">
+          <input class="form-check-input" type="radio" v-model="report_type" id="not_illust" value="not_illust">
+          <label class="form-check-label" for="not_illust">この画像はイラストではありません</label>
+        </div>
+        <div class="form-check form-check-inline" v-else>
+          <input class="form-check-input" type="radio" v-model="report_type" id="is_illust" value="is_illust">
+          <label class="form-check-label" for="is_illust">この画像はイラストです</label>
         </div>
         <div class="form-check form-check-inline" v-if="is_nsfw">
-          <input class="form-check-input" type="radio" v-model="report_type" id="radio_nsfw" value="safe">
-          <label class="form-check-label" for="radio_nsfw">この画像はNSFWではありません</label>
+          <input class="form-check-input" type="radio" v-model="report_type" id="radio_safe" value="safe">
+          <label class="form-check-label" for="radio_safe">この画像はNSFWではありません</label>
         </div>
         <div class="form-check form-check-inline" v-else>
           <input class="form-check-input" type="radio" v-model="report_type" id="radio_nsfw" value="not_safe">
@@ -127,6 +132,7 @@ const app = Vue.createApp({
       similar_images: [],
       similar_characters: [],
       is_nsfw: undefined,
+      collection: undefined,
       report_type: "not_illust",
     }
   },
@@ -142,6 +148,7 @@ const app = Vue.createApp({
           this.rating = this.image_data[n].rating;
           this.media_url = this.image_data[n].media_url;
           this.is_nsfw = this.image_data[n].is_nsfw;
+          this.collection = this.image_data[n].collection;
           axios.post('{% url 'get_similar_images' %}', {
               media_url: this.media_url,
           }).then(res => {
@@ -166,13 +173,13 @@ const app = Vue.createApp({
           image_number: this.image_number,
           name_en: name
       }).then(res => {
-	  if (res.data.success) {
+      if (res.data.success) {
             alert("キャラクター名が登録されました（"+name+"）");
             var character = {name_en: name, name_ja: ""};
             this.characters.push(character);
-	  } else {
+      } else {
             alert("キャラクター名の登録に失敗しました（"+name+"）");
-	  }
+      }
       });
     },
     submitInfo: function() {
@@ -185,31 +192,35 @@ const app = Vue.createApp({
           image_number: this.image_number,
           name: name
       }).then(res => {
-	  if (res.data.success) {
+      if (res.data.success) {
             alert("キャラクター名を削除しました（"+name+"）");
             this.characters = this.characters.filter(item => item.name_en != name);
-	  } else {
+      } else {
             alert("キャラクター名の削除に失敗しました（"+name+"）");
-	  }
+      }
       });
     },
     formSubmit: function(e) {
         e.preventDefault();
         axios.post('{% url 'report' %}', {
             status_id: "{{ status_id }}",
-	    image_number: this.image_number,
-	    report_type: this.report_type,
+        image_number: this.image_number,
+        report_type: this.report_type,
         }).then(res => {
           if(res.data.success) {
             alert("報告が完了しました");
-	    if(this.report_type == "safe") {
-	        this.is_nsfw = false;
-	    } else if (this.report_type == "not_safe") {
-	        this.is_nsfw = true;
-	    }
+            if(this.report_type == "safe") {
+                this.is_nsfw = false;
+            } else if (this.report_type == "not_safe") {
+                this.is_nsfw = true;
+            } else if (this.report_type == "is_illust") {
+              this.collection = true;
+            } else if (this.report_type == "not_illust") {
+              this.collection = false;
+            }
           } else {
             alert("報告に失敗しました");
-	  }
+      }
         });
     },
   },

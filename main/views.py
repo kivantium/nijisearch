@@ -94,7 +94,8 @@ def get_images(request, status_id):
             "rating": rating.name,
             "i2vtags": i2vtags,
             "characters": characters,
-            "is_nsfw": entry.is_nsfw})
+            "is_nsfw": entry.is_nsfw,
+	    "collection": entry.collection})
     return JsonResponse({
         "success": True, 
         "image_data": data})
