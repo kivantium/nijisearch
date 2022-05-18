@@ -4,7 +4,7 @@
 
 {% block content %}
 <div class="container">
-  <h1 class="h5 mt-5">イラスト詳細</h1>
+  <h2 class="h5 mt-5">イラスト詳細</h2>
   <hr>
   {% if not registered %}
     <p>現在詳細情報を取得中です。このページは3秒後に自動的に更新されます。</p>
@@ -43,12 +43,18 @@
     </div>
   {% endif %}
   <hr>
-  <h3 class="h5 mt-5">出典ツイート</h1>
+  <h2 class="h5 mt-5">出典ツイート</h2>
     <blockquote class="twitter-tweet tw-align-center" data-conversation="none"><a href="https://twitter.com/user/status/{{ status_id }}"></a></blockquote>
     <script src="https://platform.twitter.com/widgets.js" charset="utf-8"></script>
   <hr>
   {% if registered %}
-    <h3 class="h5 mt-4">キャラクター名の登録</h3>
+    <h2 class="h5 mt-5">類似イラスト</h2>
+    <div class="row">
+      <div class="col-4 col-md-3 col-lg-2 my-1 px-1" v-for="sim in similar_images">
+        <a v-bind:href="sim.status_url"><img class="img-fluid" v-bind:src="sim.media_url"></a></div>
+    </div>
+    <hr>
+    <h2 class="h5 mt-4">キャラクター名の登録</h2>
     <div v-if="similar_characters.length > 0">
       <p class="h6 mt-4">候補をクリックしてください</p>
       <ul class="list-inline mt-3">
@@ -69,12 +75,7 @@
         <button v-on:click="submitInfo" class="btn btn-primary">登録</button>
         </div>
     </div>
-    <h1 class="h5 mt-5">類似イラスト</h1>
-    <div class="row">
-      <div class="col-4 col-md-3 col-lg-2 my-1 px-1" v-for="sim in similar_images">
-        <a v-bind:href="sim.status_url"><img class="img-fluid" v-bind:src="sim.media_url"></a></div>
-    </div>
-    <h1 class="h5 mt-5">キャラクター情報の修正</h1>
+    <h2 class="h5 mt-5">キャラクター情報の削除</h2>
     <p class="h6 mt-4">削除するキャラクター名を選んでください</p>
     <ul class="list-inline mt-3 mb-5">
       <li class="list-inline-item" v-for="character in characters">
@@ -84,6 +85,25 @@
         </button>
       </li>
     </ul>
+    <h2 class="h5 mt-5">登録情報の修正</h2>
+    <form @submit="formSubmit">
+      {% csrf_token %}
+      <div class="form-group">
+        <div class="form-check form-check-inline">
+          <input class="form-check-input" type="radio" v-model="report_type" id="radio_illust" value="not_illust">
+          <label class="form-check-label" for="radio_illust">この画像はイラストではありません</label>
+        </div>
+        <div class="form-check form-check-inline" v-if="is_nsfw">
+          <input class="form-check-input" type="radio" v-model="report_type" id="radio_nsfw" value="safe">
+          <label class="form-check-label" for="radio_nsfw">この画像はNSFWではありません</label>
+        </div>
+        <div class="form-check form-check-inline" v-else>
+          <input class="form-check-input" type="radio" v-model="report_type" id="radio_nsfw" value="not_safe">
+          <label class="form-check-label" for="radio_nsfw">この画像はNSFWです</label>
+        </div>
+      </div>
+      <button type="submit" id="report" class="btn btn-danger">報告する</button>
+    </div>
   </div>
   {% endif %}
 {% endblock %}
@@ -106,6 +126,8 @@ const app = Vue.createApp({
       character_name: "",
       similar_images: [],
       similar_characters: [],
+      is_nsfw: undefined,
+      report_type: "not_illust",
     }
   },
   mounted() {
@@ -119,6 +141,7 @@ const app = Vue.createApp({
           this.i2vtags = this.image_data[n].i2vtags;
           this.rating = this.image_data[n].rating;
           this.media_url = this.image_data[n].media_url;
+          this.is_nsfw = this.image_data[n].is_nsfw;
           axios.post('{% url 'get_similar_images' %}', {
               media_url: this.media_url,
           }).then(res => {
@@ -169,6 +192,25 @@ const app = Vue.createApp({
             alert("キャラクター名の削除に失敗しました（"+name+"）");
 	  }
       });
+    },
+    formSubmit: function(e) {
+        e.preventDefault();
+        axios.post('{% url 'report' %}', {
+            status_id: "{{ status_id }}",
+	    image_number: this.image_number,
+	    report_type: this.report_type,
+        }).then(res => {
+          if(res.data.success) {
+            alert("報告が完了しました");
+	    if(this.report_type == "safe") {
+	        this.is_nsfw = false;
+	    } else if (this.report_type == "not_safe") {
+	        this.is_nsfw = true;
+	    }
+          } else {
+            alert("報告に失敗しました");
+	  }
+        });
     },
   },
   compilerOptions: {
