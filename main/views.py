@@ -139,7 +139,8 @@ def get_images(request, status_id):
             "media_url": entry.media_url,
             "rating": rating.name,
             "i2vtags": i2vtags,
-            "characters": characters})
+            "characters": characters,
+            "is_nsfw": entry.is_nsfw})
     return JsonResponse({
         "success": True, 
         "image_data": data})
@@ -232,6 +233,40 @@ def search(request):
             {'images': images, 'images_count': images_count,
              'i2vtags': i2vtags, 'character': character_tag,
              'prev_page': prev_page, 'next_page': next_page})
+
+def unlisted(request):
+    page = request.GET.get('page', default='1')
+    page = int(page)
+    images = ImageEntry.objects.filter(collection=False)
+    images_per_page = 120
+    images_count = images.count()
+    last_page = -(-images_count // images_per_page)  # round up
+    prev_page = request.path + f'?page={page-1}' if page != 1 else None
+    next_page = request.path + f'?page={page+1}' if page != last_page else None
+
+    images = images.order_by('-pk')[images_per_page*(page-1):images_per_page*page]
+
+    return render(request, 'main/search.html', 
+            {'images': images, 'images_count': images_count, 'unlisted': True, 
+             'prev_page': prev_page, 'next_page': next_page})
+
+@csrf_exempt
+@require_POST
+def report(request):
+    data = json.loads(request.body)
+    try:
+        status = Status.objects.get(status_id=data['status_id'])
+        image = ImageEntry.objects.get(status=status, image_number=data['image_number'])
+        if data['report_type'] == 'not_illust':
+            image.collection = False
+        elif data['report_type'] == 'safe':
+            image.is_nsfw = False
+        elif data['report_type'] == 'not_safe':
+            image.is_nsfw = True
+        image.save()
+    except Exception as e:
+        return JsonResponse({ "success": False, })
+    return JsonResponse({ "success": True, })
 
 @csrf_exempt
 @require_POST
