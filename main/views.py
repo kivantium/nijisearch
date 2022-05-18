@@ -64,7 +64,7 @@ def quiz(request):
                     name = f"{character.name_ja} | {character.name_en}"
                 else:
                     name = f"{character.name_en}"
-		  characters.append(name)
+		characters.append(name)
                 translations[row[1]] = name
             questions.append({"character": name, "status_id": row[2], "media_url": row[3]})
     return render(request, 'main/quiz.html', {
