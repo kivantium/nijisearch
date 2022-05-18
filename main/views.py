@@ -64,7 +64,7 @@ def quiz(request):
                     name = f"{character.name_ja} | {character.name_en}"
                 else:
                     name = f"{character.name_en}"
-                    characters.append(name)
+		  characters.append(name)
                 translations[row[1]] = name
             questions.append({"character": name, "status_id": row[2], "media_url": row[3]})
     return render(request, 'main/quiz.html', {
@@ -89,7 +89,7 @@ def study(request):
     return render(request, 'main/study.html', {
         'character_list': character_list})
 
-def author(request):
+def author(request, screen_name):
     try:
         author = Author.objects.get(screen_name=screen_name)
     except:
