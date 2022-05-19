@@ -2,3 +2,4 @@ Django
 onnxruntime
 scikit-image
 tweepy
+imagehash

@@ -12,6 +12,8 @@ from urllib.parse import urlparse
 from PIL import Image
 import i2v
 import requests
+import collections
+import imagehash
 
 def get_twitter_api():
     consumer_key = settings.SOCIAL_AUTH_TWITTER_KEY
@@ -36,9 +38,6 @@ def softmax(x):
 
 img_mean = np.asarray([0.485, 0.456, 0.406])
 img_std = np.asarray([0.229, 0.224, 0.225])
-
-ort_session = onnxruntime.InferenceSession(
-    os.path.join(os.path.dirname(__file__), "model.onnx"))
 
 illust2vec = i2v.make_i2v_with_onnx(
         os.path.join(os.path.dirname(__file__), "illust2vec_tag_ver200.onnx"),
@@ -70,6 +69,10 @@ def register_status(status_id):
     if 'media' not in status.entities:
         return {"success": False, "message": f"The status {status_id} has no media."}
 
+    for num, media in enumerate(status.extended_entities['media']):
+        if media['type'] == 'video':
+            return {"success": False, "message": f"The status {status_id} contains video."}
+
     status_entry, created = Status.objects.get_or_create(author=author_entry, 
                                                          status_id=status_id,
                                                          created_at=status.created_at)
@@ -94,12 +97,7 @@ def register_status(status_id):
     status_entry.retweet_count = status.retweet_count
     status_entry.like_count = status.favorite_count
 
-    contains_illust = False
     for num, media in enumerate(status.extended_entities['media']):
-        if media['type'] == 'video':
-            status_entry.contains_illust = False
-            status_entry.save()
-            return {"success": False, "message": f"The status {status_id} contains video."}
         media_url = media['media_url_https']
         filename = os.path.basename(urlparse(media_url).path)
         filename = os.path.join('/tmp', filename)
@@ -113,16 +111,6 @@ def register_status(status_id):
         # (H, W, C) -> (C, H, W)
         img_np_transposed = img_np_normalized.transpose(2, 0, 1)
 
-        batch_img = [img_np_transposed]
-
-        ort_inputs = {ort_session.get_inputs()[0].name: batch_img}
-        ort_outs = ort_session.run(None, ort_inputs)[0]
-        probs = softmax(ort_outs[0])
-
-        is_illust = True if probs[1] > 0.3 else False
-        if is_illust:
-            contains_illust = True
-
         # Run Illustration2Vec
         i2vtags = illust2vec.estimate_plausible_tags([img_pil], threshold=0.4)
 
@@ -130,9 +118,7 @@ def register_status(status_id):
                     author = author_entry,
                     status = status_entry,
                     image_number=num,
-                    media_url=media_url,
-                    collection=is_illust)
-
+                    media_url=media_url)
 
         for category, TYPE in [('character', 'CH'), ('copyright', 'CO'), ('general', 'GE')]:
             for tag in i2vtags[0][category]:
@@ -168,24 +154,29 @@ def register_status(status_id):
             img_entry.collection = False
 
         # Add similar characters
-        #res = requests.post(f'http://{settings.IMAGE_SEARCH_SERVER_IP}/search/', json={"media_url": img_entry.media_url}).json()
-        #if res['success']:
-        #    character_names = []
-        #    indices = res['indices']
-        #    media_urls = res['media_urls']
-        #    for status_id, media_url in zip(indices, media_urls):
-        #        try:
-        #            entry = ImageEntry.objects.get(media_url=media_url)
-        #            character_names.extend([chara.name_ja for chara in entry.characters.all()])
-        #        except:
-        #            pass
-        #    for name in list(set(character_names)):
-        #        tag, _ = Character.objects.get_or_create(name_ja=name)
-        #        img_entry.similar_characters.add(tag)
-        #img_entry.save()
+        res = requests.post(f'http://{settings.IMAGE_SEARCH_SERVER_IP}/search/', json={"media_url": img_entry.media_url}).json()
+        if res['success']:
+            characters = []
+            indices = res['indices']
+            media_urls = res['media_urls']
+            for status_id, media_url in zip(indices, media_urls):
+                try:
+                    entry = ImageEntry.objects.get(media_url=media_url)
+                    characters.extend([chara.pk for chara in entry.characters.all()])
+                except:
+                    pass
 
-    status_entry.contains_illust = contains_illust
-    img_entry = ImageEntry.objects.get(status = status_entry, image_number=0)
-    status_entry.thumbnail_url = img_entry.media_url
+            count = collections.Counter(characters)
+            for pk in set(characters):
+                if count[pk] >= 3:
+                    tag = Character.objects.get(pk=pk)
+                    img_entry.similar_characters.add(tag)
+        img_entry.imagehash = str(imagehash.average_hash(img_pil))
+        img_entry.save()
+
+    status_entry.contains_illust = any([img.collection for img in ImageEntry.objects.filter(status=status_entry)])
+    if status_entry.contains_illust:
+        img_entry = ImageEntry.objects.filter(status=status_entry, collection=True).order_by('image_number')[0]
+        status_entry.thumbnail_url = img_entry.media_url
     status_entry.save()
     return {"success": True, "message": f"The status {status_id} is registered successfully."}

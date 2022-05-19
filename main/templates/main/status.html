@@ -37,6 +37,14 @@
         </a>
       </li>
     </ul>
+    <ul class="list-inline mt-3 v-cloak" v-if="characters.length==0">
+      <li class="list-inline-item" v-for="character in candidates">
+        <a v-bind:href="'/search/?character='+character.name_en" class="badge bg-dark rounded-pill text-decoration-none">
+          <span v-if='character.name_ja == ""'>[[ character.name_en ]]</span>
+          <span v-else>[[ character.name_ja ]]</span>
+        </a>
+      </li>
+    </ul>
     <div class="row justify-content-center">
       <div class="col-1 my-auto"><button class="btn btn-outline-secondary" v-if="image_number > 0" v-on:click="updateImage(image_number-1)"><i class="bi bi-arrow-left"></i></button></div>
       <div class="col-8 col-lg-4"><img class="img-fluid" v-bind:src="media_url"></div>
@@ -44,72 +52,72 @@
     </div>
   {% endif %}
   <hr>
+  {% if registered %}
+  <h2 class="h5 mt-4">キャラクター名の登録</h2>
+  <div v-if="similar_characters.length > 0">
+    <p class="h6 mt-4">候補をクリックしてください</p>
+    <ul class="list-inline mt-3">
+      <li class="list-inline-item" v-for="name in similar_characters">
+        <button class="btn btn-outline-secondary btn-sm" v-on:click="registerName(name)">[[ name ]]</button>
+      </li>
+    </ul>
+    <p class="h6 mt-4">正しい名前が候補にない場合はキャラクター名を英語で入力してください</p>
+  </div>
+  <div v-else>
+    <p class="h6 mt-4">キャラクター名を英語で入力してください</p>
+   </div>
+  <div class="row gy-2 gx-3 align-items-center">
+      <div class="col-auto">
+      <input type="text" class="form-control" v-bind="character_name" ref="input">
+      </div>
+      <div class="col-auto">
+      <button v-on:click="submitInfo" class="btn btn-primary">登録</button>
+      </div>
+  </div>
+  <h2 class="h5 mt-5">キャラクター情報の削除</h2>
+  <p class="h6 mt-4">削除するキャラクター名を選んでください</p>
+  <ul class="list-inline mt-3 mb-5">
+    <li class="list-inline-item" v-for="character in characters">
+      <button class="btn btn-secondary btn-sm" v-on:click="deleteName(character.name_en)">
+        <span v-if='character.name_ja == ""'>[[ character.name_en ]]</span>
+        <span v-else>[[ character.name_ja ]]</span>
+      </button>
+    </li>
+  </ul>
+  <h2 class="h5 mt-5">登録情報の修正</h2>
+  <form @submit="formSubmit">
+    {% csrf_token %}
+    <div class="form-group">
+      <div class="form-check form-check-inline" v-if="collection">
+        <input class="form-check-input" type="radio" v-model="report_type" id="not_illust" value="not_illust">
+        <label class="form-check-label" for="not_illust">この画像はイラストではありません</label>
+      </div>
+      <div class="form-check form-check-inline" v-else>
+        <input class="form-check-input" type="radio" v-model="report_type" id="is_illust" value="is_illust">
+        <label class="form-check-label" for="is_illust">この画像はイラストです</label>
+      </div>
+      <div class="form-check form-check-inline" v-if="is_nsfw">
+        <input class="form-check-input" type="radio" v-model="report_type" id="radio_safe" value="safe">
+        <label class="form-check-label" for="radio_safe">この画像はNSFWではありません</label>
+      </div>
+      <div class="form-check form-check-inline" v-else>
+        <input class="form-check-input" type="radio" v-model="report_type" id="radio_nsfw" value="not_safe">
+        <label class="form-check-label" for="radio_nsfw">この画像はNSFWです</label>
+      </div>
+    </div>
+    <button type="submit" id="report" class="btn btn-danger">報告する</button>
+  </form>
+  <hr>
   <h2 class="h5 mt-5">出典ツイート</h2>
     <blockquote class="twitter-tweet tw-align-center" data-conversation="none"><a href="https://twitter.com/user/status/{{ status_id }}"></a></blockquote>
     <script src="https://platform.twitter.com/widgets.js" charset="utf-8"></script>
-  <hr>
-  {% if registered %}
-    <h2 class="h5 mt-5">類似イラスト</h2>
-    <div class="row">
-      <div class="col-4 col-md-3 col-lg-2 my-1 px-1" v-for="sim in similar_images">
-        <a v-bind:href="sim.status_url"><img class="img-fluid" v-bind:src="sim.media_url"></a></div>
-    </div>
-    <hr>
-    <h2 class="h5 mt-4">キャラクター名の登録</h2>
-    <div v-if="similar_characters.length > 0">
-      <p class="h6 mt-4">候補をクリックしてください</p>
-      <ul class="list-inline mt-3">
-        <li class="list-inline-item" v-for="name in similar_characters">
-          <button class="btn btn-outline-secondary btn-sm" v-on:click="registerName(name)">[[ name ]]</button>
-        </li>
-      </ul>
-      <p class="h6 mt-4">正しい名前が候補にない場合はキャラクター名を英語で入力してください</p>
-    </div>
-    <div v-else>
-      <p class="h6 mt-4">キャラクター名を英語で入力してください</p>
-     </div>
-    <div class="row gy-2 gx-3 align-items-center">
-        <div class="col-auto">
-        <input type="text" class="form-control" v-bind="character_name" ref="input">
-        </div>
-        <div class="col-auto">
-        <button v-on:click="submitInfo" class="btn btn-primary">登録</button>
-        </div>
-    </div>
-    <h2 class="h5 mt-5">キャラクター情報の削除</h2>
-    <p class="h6 mt-4">削除するキャラクター名を選んでください</p>
-    <ul class="list-inline mt-3 mb-5">
-      <li class="list-inline-item" v-for="character in characters">
-        <button class="btn btn-secondary btn-sm" v-on:click="deleteName(character.name_en)">
-          <span v-if='character.name_ja == ""'>[[ character.name_en ]]</span>
-          <span v-else>[[ character.name_ja ]]</span>
-        </button>
-      </li>
-    </ul>
-    <h2 class="h5 mt-5">登録情報の修正</h2>
-    <form @submit="formSubmit">
-      {% csrf_token %}
-      <div class="form-group">
-        <div class="form-check form-check-inline" v-if="collection">
-          <input class="form-check-input" type="radio" v-model="report_type" id="not_illust" value="not_illust">
-          <label class="form-check-label" for="not_illust">この画像はイラストではありません</label>
-        </div>
-        <div class="form-check form-check-inline" v-else>
-          <input class="form-check-input" type="radio" v-model="report_type" id="is_illust" value="is_illust">
-          <label class="form-check-label" for="is_illust">この画像はイラストです</label>
-        </div>
-        <div class="form-check form-check-inline" v-if="is_nsfw">
-          <input class="form-check-input" type="radio" v-model="report_type" id="radio_safe" value="safe">
-          <label class="form-check-label" for="radio_safe">この画像はNSFWではありません</label>
-        </div>
-        <div class="form-check form-check-inline" v-else>
-          <input class="form-check-input" type="radio" v-model="report_type" id="radio_nsfw" value="not_safe">
-          <label class="form-check-label" for="radio_nsfw">この画像はNSFWです</label>
-        </div>
-      </div>
-      <button type="submit" id="report" class="btn btn-danger">報告する</button>
-    </div>
+  <h2 class="h5 mt-5">類似イラスト</h2>
+  <div class="row">
+    <div class="col-4 col-md-3 col-lg-2 my-1 px-1" v-for="sim in similar_images">
+      <a v-bind:href="sim.status_url"><img class="img-fluid" v-bind:src="sim.media_url"></a></div>
   </div>
+  <hr>
+</div>
   {% endif %}
 {% endblock %}
 
@@ -126,6 +134,7 @@ const app = Vue.createApp({
       rating: "",
       i2vtags: [],
       characters: [],
+      candidates: [],
       media_url: "",
       image_data: [],
       character_name: "",
@@ -144,6 +153,7 @@ const app = Vue.createApp({
           var n = this.image_number;
           this.image_data = res.data.image_data;
           this.characters = this.image_data[n].characters;
+          this.candidates = this.image_data[n].candidates;
           this.i2vtags = this.image_data[n].i2vtags;
           this.rating = this.image_data[n].rating;
           this.media_url = this.image_data[n].media_url;
