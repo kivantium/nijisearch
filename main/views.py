@@ -88,12 +88,14 @@ def get_images(request, status_id):
         rating = entry.i2vtags.get(tag_type='RA')
         i2vtags = [tag.name for T in ['GE', 'CO', 'CH'] for tag in entry.i2vtags.filter(tag_type=T)]
         characters = [{"name_ja": c.name_ja, "name_en": c.name_en} for c in entry.characters.all()]
+        candidates = [{"name_ja": c.name_ja, "name_en": c.name_en} for c in entry.similar_characters.all()]
 
         data.append({
             "media_url": entry.media_url,
             "rating": rating.name,
             "i2vtags": i2vtags,
             "characters": characters,
+            "candidates": candidates,
             "is_nsfw": entry.is_nsfw,
 	    "collection": entry.collection})
     return JsonResponse({
@@ -214,6 +216,8 @@ def report(request):
         image = ImageEntry.objects.get(status=status, image_number=data['image_number'])
         if data['report_type'] == 'not_illust':
             image.collection = False
+        elif data['report_type'] == 'is_illust':
+            image.collection = True
         elif data['report_type'] == 'safe':
             image.is_nsfw = False
         elif data['report_type'] == 'not_safe':

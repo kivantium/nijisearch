@@ -55,7 +55,7 @@
     {% for image in images %}
     <div class="col-6 col-sm-4 col-md-3 col-lg-2 position-relative">
         <a href="{% url 'status' image.status.status_id %}?n={{ image.image_number }}"><img class="w-100 img-thumbnail" src="{{image.media_url}}:thumb"></a>
-	{% if not image.confirmed %}<span class="position-absolute top-0 start-0 badge rounded-pill bg-danger">Unknown</span>{% endif %}
+	{% if not image.confirmed %}<span class="position-absolute top-0 start-0 badge rounded-pill bg-danger">Unconfirmed</span>{% endif %}
     </div>
     {% endfor %}
   </div>
