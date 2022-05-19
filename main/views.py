@@ -223,6 +223,8 @@ def report(request):
         elif data['report_type'] == 'not_safe':
             image.is_nsfw = True
         image.save()
+        status.contains_illust = any([img.collection for img in ImageEntry.objects.filter(status=status)])
+        status.save()
     except Exception as e:
         return JsonResponse({ "success": False, })
     return JsonResponse({ "success": True, })
