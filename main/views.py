@@ -188,7 +188,7 @@ def search(request):
     safe = True if safe == 't' else False
     only_confirmed = True if only_confirmed == 't' else False
 
-    images = ImageEntry.objects.all()
+    images = ImageEntry.objects.filter(collection=True)
     query = ""
     if i2vtags is not None:
         query += f"&i2vtags={quote(i2vtags)}"
@@ -222,7 +222,7 @@ def search(request):
         if only_confirmed:
             images = images.filter(characters=character_tag)
         else:
-            images = images.filter(Q(characters=character_tag) | Q(similar_characters=character_tag))
+            images = images.filter(Q(characters=character_tag) | (Q(similar_characters=character_tag) & Q(confirmed=False)))
 
     images_per_page = 120
     images_count = images.count()
