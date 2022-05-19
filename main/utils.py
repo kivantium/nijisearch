@@ -107,9 +107,16 @@ def register_status(status_id):
 
         img_np = np.asarray(img).astype(np.float32)/255.0
         img_np_normalized = (img_np - img_mean) / img_std
+        ort_session = onnxruntime.InferenceSession(
+            os.path.join(os.path.dirname(__file__), "model.onnx"))
 
         # (H, W, C) -> (C, H, W)
         img_np_transposed = img_np_normalized.transpose(2, 0, 1)
+        batch_img = [img_np_transposed]
+        ort_inputs = {ort_session.get_inputs()[0].name: batch_img}
+        ort_outs = ort_session.run(None, ort_inputs)[0]
+        probs = softmax(ort_outs[0])
+        is_illust = True if probs[1] > 0.3 else False
 
         # Run Illustration2Vec
         i2vtags = illust2vec.estimate_plausible_tags([img_pil], threshold=0.4)
@@ -118,7 +125,8 @@ def register_status(status_id):
                     author = author_entry,
                     status = status_entry,
                     image_number=num,
-                    media_url=media_url)
+                    media_url=media_url,
+                    collection=is_illust)
 
         for category, TYPE in [('character', 'CH'), ('copyright', 'CO'), ('general', 'GE')]:
             for tag in i2vtags[0][category]:
@@ -174,9 +182,10 @@ def register_status(status_id):
         img_entry.imagehash = str(imagehash.average_hash(img_pil))
         img_entry.save()
 
-    status_entry.contains_illust = any([img.collection for img in ImageEntry.objects.filter(status=status_entry)])
+    entries = ImageEntry.objects.filter(status=status_entry)
+    status_entry.contains_illust = any([img.collection for img in entries])
     if status_entry.contains_illust:
-        img_entry = ImageEntry.objects.filter(status=status_entry, collection=True).order_by('image_number')[0]
+        img_entry = entries.filter(collection=True).order_by('image_number')[0]
         status_entry.thumbnail_url = img_entry.media_url
     status_entry.save()
     return {"success": True, "message": f"The status {status_id} is registered successfully."}
