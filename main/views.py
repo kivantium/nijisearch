@@ -313,3 +313,10 @@ def delete_character(request):
     image_entry.confirmed = False
     image_entry.save()
     return JsonResponse({ "success": True, })
+
+@csrf_exempt
+@require_POST
+def suggest_character(request):
+    data = json.loads(request.body)
+    characters = Character.objects.filter(name_en__contains=data['content'])
+    return JsonResponse({"success": True, "names": [c.name_en for c in characters]})
