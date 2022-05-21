@@ -60,6 +60,7 @@ class ImageEntry(models.Model):
     is_nsfw = models.BooleanField(default=False)
     is_duplicated = models.BooleanField(default=False)
     is_trimmed = models.BooleanField(default=False)
+    is_deleted = models.BooleanField(default=False)
     imagehash = models.CharField(max_length=16, default="", blank=True)
     parent = models.ForeignKey("self", on_delete=models.PROTECT, null=True)
     i2vtags = models.ManyToManyField(I2VTag)
