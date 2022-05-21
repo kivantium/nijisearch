@@ -178,6 +178,7 @@ def search(request):
         else:
             images = images.filter(Q(characters=character_tag) | (Q(similar_characters=character_tag) & Q(confirmed=False)))
 
+    images = images.distinct()
     images_per_page = 120
     images_count = images.count()
     last_page = -(-images_count // images_per_page)  # round up
@@ -222,6 +223,9 @@ def report(request):
             image.is_nsfw = False
         elif data['report_type'] == 'not_safe':
             image.is_nsfw = True
+        elif data['report_type'] == 'deleted':
+            image.is_deleted = True
+            image.collection = False
         image.save()
         status.contains_illust = any([img.collection for img in ImageEntry.objects.filter(status=status)])
         status.save()

@@ -109,6 +109,10 @@
         <input class="form-check-input" type="radio" v-model="report_type" id="radio_nsfw" value="not_safe">
         <label class="form-check-label" for="radio_nsfw">この画像はNSFWです</label>
       </div>
+      <div class="form-check form-check-inline">
+        <input class="form-check-input" type="radio" v-model="report_type" id="radio_deleted" value="deleted">
+        <label class="form-check-label" for="radio_deleted">この画像は削除されました</label>
+      </div>
     </div>
     <button type="submit" id="report" class="btn btn-danger">報告する</button>
   </form>
@@ -231,6 +235,8 @@ const app = Vue.createApp({
             } else if (this.report_type == "is_illust") {
               this.collection = true;
             } else if (this.report_type == "not_illust") {
+              this.collection = false;
+            } else if (this.report_type == "deleted") {
               this.collection = false;
             }
           } else {
