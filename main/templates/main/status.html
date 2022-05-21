@@ -69,13 +69,16 @@
     <p class="h6 mt-4">キャラクター名を英語で入力してください</p>
    </div>
   <div class="row gy-2 gx-3 align-items-center">
-      <div class="col-auto">
-      <input type="text" class="form-control" v-bind="character_name" ref="input">
-      </div>
-      <div class="col-auto">
+    <div class="col-auto">
+      <input type="text" class="form-control" v-bind="character_name" ref="input" list="candidates" autocomplete="off" @keydown="suggest_character">
+    </div>
+    <div class="col-auto">
       <button v-on:click="submitInfo" class="btn btn-primary">登録</button>
-      </div>
+    </div>
   </div>
+  <datalist id="candidates">
+    <option v-for="name in name_candidates" :value="name">
+  </datalist>
   <h2 class="h5 mt-5">キャラクター情報の削除</h2>
   <p class="h6 mt-4">削除するキャラクター名を選んでください</p>
   <ul class="list-inline mt-3 mb-5">
@@ -118,9 +121,8 @@
     <div class="col-4 col-md-3 col-lg-2 my-1 px-1" v-for="sim in similar_images">
       <a v-bind:href="sim.status_url"><img class="img-fluid" v-bind:src="sim.media_url"></a></div>
   </div>
-  <hr>
 </div>
-  {% endif %}
+{% endif %}
 {% endblock %}
 
 {% block script %}
@@ -142,6 +144,7 @@ const app = Vue.createApp({
       character_name: "",
       similar_images: [],
       similar_characters: [],
+      name_candidates: [],
       is_nsfw: undefined,
       collection: undefined,
       report_type: "not_illust",
@@ -234,6 +237,20 @@ const app = Vue.createApp({
             alert("報告に失敗しました");
       }
         });
+    },
+    suggest_character: function(e) {
+      var content = this.$refs.input.value;
+      if (content.length < 3) {
+        this.name_candidates = [];
+        return;
+      }
+      axios.post('{% url 'suggest_character' %}', {
+          content: content
+      }).then(res => {
+          if(res.data.success) {
+            this.name_candidates = res.data.names;
+          }
+      });
     },
   },
   compilerOptions: {
