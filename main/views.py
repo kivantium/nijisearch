@@ -20,13 +20,8 @@ from urllib.parse import urlparse, quote
 import random
 
 def index(request):
-    status_list = Status.objects.filter(contains_illust=True).order_by('-pk')[:120]
-    status_count = Status.objects.count()
-    character_count = Character.objects.count()
-    return render(request, 'main/index.html', {
-        'status_list': status_list,
-        'status_count': status_count,
-        'character_count': character_count})
+    images = ImageEntry.objects.filter(collection=True).order_by('-pk')[:120]
+    return render(request, 'main/index.html', {'images': images,})
 
 def translate(request):
     page = int(request.GET.get('page', default='0'))
@@ -178,7 +173,7 @@ def get_similar_images(request):
 def search(request):
     i2vtags = request.GET.get('i2vtags')
     hashtags = request.GET.get('hashtags')
-    keywords = request.GET.get('keyword')
+    keyword = request.GET.get('keyword')
     character = request.GET.get('character')
     only_confirmed = request.GET.get('confirmed', default='f')
     page = request.GET.get('page', default='1')
@@ -208,6 +203,10 @@ def search(request):
             except HashTag.DoesNotExist:
                 return render(request, 'main/search.html', {'notfound': True})
             status_list = status_list.filter(hashtags=tag)
+        images = images.filter(status__in=status_list)
+    if keyword is not None:
+        query += f"&keyword={quote(keyword)}"
+        status_list = Status.objects.filter(text__contains=keyword)
         images = images.filter(status__in=status_list)
     character_tag = None
     if character is not None:
