@@ -31,15 +31,7 @@
     </ul>
     <ul class="list-inline mt-3 v-cloak">
       <li class="list-inline-item" v-for="character in characters">
-        <a v-bind:href="'/search/?character='+encodeURIComponent(character.name_en)" class="badge bg-success rounded-pill text-decoration-none">
-          <span v-if='character.name_ja == ""'>[[ character.name_en ]]</span>
-          <span v-else>[[ character.name_ja ]]</span>
-        </a>
-      </li>
-    </ul>
-    <ul class="list-inline mt-3 v-cloak" v-if="characters.length==0">
-      <li class="list-inline-item" v-for="character in candidates">
-        <a v-bind:href="'/search/?character='+encodeURIComponent(character.name_en)" class="badge bg-dark rounded-pill text-decoration-none">
+          <a v-bind:href="'/search/?character='+encodeURIComponent(character.name_en)" class="badge bg-success rounded-pill text-decoration-none" :class="{ 'bg-success': confirmed, 'bg-dark': !confirmed }">
           <span v-if='character.name_ja == ""'>[[ character.name_en ]]</span>
           <span v-else>[[ character.name_ja ]]</span>
         </a>
@@ -119,7 +111,6 @@
   <hr>
   <h2 class="h5 mt-5">出典ツイート</h2>
     <blockquote class="twitter-tweet tw-align-center" data-conversation="none"><a href="https://twitter.com/user/status/{{ status_id }}"></a></blockquote>
-    <script src="https://platform.twitter.com/widgets.js" charset="utf-8"></script>
   <h2 class="h5 mt-5">類似イラスト</h2>
   <div class="row">
     <div class="col-4 col-md-3 col-lg-2 my-1 px-1" v-for="sim in similar_images">
@@ -131,6 +122,7 @@
 
 {% block script %}
 {% if registered %}
+<script src="https://platform.twitter.com/widgets.js" charset="utf-8"></script>
 <script src="https://unpkg.com/vue@3.2.26"></script>
 <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
 <script>
@@ -151,6 +143,7 @@ const app = Vue.createApp({
       name_candidates: [],
       is_nsfw: undefined,
       collection: undefined,
+      confirmed: undefined,
       report_type: "not_illust",
     }
   },
@@ -168,6 +161,7 @@ const app = Vue.createApp({
           this.media_url = this.image_data[n].media_url;
           this.is_nsfw = this.image_data[n].is_nsfw;
           this.collection = this.image_data[n].collection;
+          this.confirmed = this.image_data[n].confirmed;
           axios.post('{% url 'get_similar_images' %}', {
               media_url: this.media_url,
           }).then(res => {
@@ -180,7 +174,7 @@ const app = Vue.createApp({
       });
     const url = new URL(window.location);
     url.searchParams.set('n', this.image_number);
-    history.pushState({}, '', url);
+    history.replaceState({}, '', url);
   },
   methods: {
     updateImage: function(n) {
@@ -189,9 +183,10 @@ const app = Vue.createApp({
       this.rating = this.image_data[n].rating;
       this.media_url = this.image_data[n].media_url;
       this.collection = this.image_data[n].collection;
+      this.confirmed = this.image_data[n].confirmed;
       const url = new URL(window.location);
       url.searchParams.set('n', this.image_number);
-      history.pushState({}, '', url);
+      history.replaceState({}, '', url);
     },
     registerName: function(name) {
       axios.post('{% url 'register_character' %}', {
@@ -203,6 +198,7 @@ const app = Vue.createApp({
             alert("キャラクター名が登録されました（"+name+"）");
             var character = {name_en: name, name_ja: ""};
             this.characters.push(character);
+            this.confirmed = true;
       } else {
             alert("キャラクター名の登録に失敗しました（"+name+"）");
       }

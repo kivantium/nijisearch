@@ -83,14 +83,13 @@ def get_images(request, status_id):
         rating = entry.i2vtags.get(tag_type='RA')
         i2vtags = [tag.name for T in ['GE', 'CO', 'CH'] for tag in entry.i2vtags.filter(tag_type=T)]
         characters = [{"name_ja": c.name_ja, "name_en": c.name_en} for c in entry.characters.all()]
-        candidates = [{"name_ja": c.name_ja, "name_en": c.name_en} for c in entry.similar_characters.all()]
 
         data.append({
             "media_url": entry.media_url,
             "rating": rating.name,
             "i2vtags": i2vtags,
             "characters": characters,
-            "candidates": candidates,
+            "confirmed": entry.confirmed,
             "is_nsfw": entry.is_nsfw,
 	    "collection": entry.collection})
     return JsonResponse({
@@ -173,9 +172,9 @@ def search(request):
             except Character.DoesNotExist:
                 return render(request, 'main/search.html', {'character': character, 'notfound': True})
         if only_confirmed:
-            images = images.filter(characters=character_tag)
+            images = images.filter(Q(characters=character_tag) & Q(confirmed=True))
         else:
-            images = images.filter(Q(characters=character_tag) | (Q(similar_characters=character_tag) & Q(confirmed=False)))
+            images = images.filter(Q(characters=character_tag))
 
     images = images.distinct()
     images_per_page = 120
@@ -267,7 +266,7 @@ def delete_character(request):
     status = Status.objects.get(status_id=int(data['status_id']))
     image_entry = ImageEntry.objects.get(status=status, image_number=data['image_number'])
     image_entry.characters.remove(character)
-    image_entry.confirmed = False
+    image_entry.confirmed = True
     image_entry.save()
     return JsonResponse({ "success": True, })
 

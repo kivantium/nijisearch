@@ -178,7 +178,7 @@ def register_status(status_id):
             for pk in set(characters):
                 if count[pk] >= 3:
                     tag = Character.objects.get(pk=pk)
-                    img_entry.similar_characters.add(tag)
+                    img_entry.characters.add(tag)
         img_entry.imagehash = str(imagehash.average_hash(img_pil))
         img_entry.save()
 
