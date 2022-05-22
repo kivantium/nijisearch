@@ -70,7 +70,7 @@
    </div>
   <div class="row gy-2 gx-3 align-items-center">
     <div class="col-auto">
-      <input type="text" class="form-control" v-bind="character_name" ref="input" list="candidates" autocomplete="off" @keydown="suggest_character">
+      <input type="text" class="form-control" v-bind="character_name" ref="input" list="candidates" autocomplete="off" @keyup="suggest_character">
     </div>
     <div class="col-auto">
       <button v-on:click="submitInfo" class="btn btn-primary">登録</button>
@@ -178,6 +178,9 @@ const app = Vue.createApp({
           });
         }
       });
+    const url = new URL(window.location);
+    url.searchParams.set('n', this.image_number);
+    history.pushState({}, '', url);
   },
   methods: {
     updateImage: function(n) {
@@ -185,6 +188,10 @@ const app = Vue.createApp({
       this.i2vtags = this.image_data[n].i2vtags;
       this.rating = this.image_data[n].rating;
       this.media_url = this.image_data[n].media_url;
+      this.collection = this.image_data[n].collection;
+      const url = new URL(window.location);
+      url.searchParams.set('n', this.image_number);
+      history.pushState({}, '', url);
     },
     registerName: function(name) {
       axios.post('{% url 'register_character' %}', {

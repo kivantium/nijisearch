@@ -17,13 +17,8 @@ import json
 from urllib.parse import urlparse, quote
 
 def index(request):
-    status_list = Status.objects.filter(contains_illust=True).order_by('-pk')[:120]
-    status_count = Status.objects.count()
-    character_count = Character.objects.count()
-    return render(request, 'main/index.html', {
-        'status_list': status_list,
-        'status_count': status_count,
-        'character_count': character_count})
+    images = ImageEntry.objects.filter(collection=True).order_by('-pk')[:120]
+    return render(request, 'main/index.html', {'images': images,})
 
 def translate(request):
     page = int(request.GET.get('page', default='0'))

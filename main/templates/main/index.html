@@ -4,15 +4,10 @@
 
 {% block content %}
 <div class="container">
-  <ul class="my-4">
-    <li>現在登録されているツイート数: {{ status_count }}</li>
-    <li>現在登録されているキャラクター数: {{ character_count }}</li>
-  </ul>
-
-  <form id="search" class="mt-3 row justify-content-center">
+  <form id="search" class="mt-5 row justify-content-center">
     <div class="col">
       <div class="form-group">
-        <input type="text" class="form-control" id="query" placeholder="検索クエリを入力">
+        <input type="text" class="form-control" id="query" placeholder="検索クエリを入力" autocomplete="off">
       </div>
       <div class="form-group mt-2">
         <!--<div class="form-check form-check-inline">
@@ -51,9 +46,9 @@
   <h2 class="h5 mt-5">新しく登録されたイラスト</h2>
   <hr>
   <div class="mt-4 row g-0">
-    {% for status in status_list %}
+    {% for image in images %}
       <div class="col-6 col-sm-4 col-md-3 col-lg-2 mb-0">
-          <a href="{% url 'status' status.status_id %}"><img class="w-100 img-thumbnail" src="{{status.thumbnail_url}}:thumb"></a>
+          <a href="{% url 'status' image.status.status_id %}?n={{image.image_number}}"><img class="w-100 img-thumbnail" src="{{image.media_url}}:thumb"></a>
       </div>
     {% endfor %}
   </div>
