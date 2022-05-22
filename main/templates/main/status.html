@@ -148,37 +148,41 @@ const app = Vue.createApp({
     }
   },
   mounted() {
-    axios.get('{% url 'get_images' status_id %}')
-      .then(res => {
-        this.success = res.data.success;
-        if(this.success) {
-          var n = this.image_number;
-          this.image_data = res.data.image_data;
-          this.characters = this.image_data[n].characters;
-          this.candidates = this.image_data[n].candidates;
-          this.i2vtags = this.image_data[n].i2vtags;
-          this.rating = this.image_data[n].rating;
-          this.media_url = this.image_data[n].media_url;
-          this.is_nsfw = this.image_data[n].is_nsfw;
-          this.collection = this.image_data[n].collection;
-          this.confirmed = this.image_data[n].confirmed;
-          axios.post('{% url 'get_similar_images' %}', {
-              media_url: this.media_url,
-          }).then(res => {
-            if(res.data.success) {
-              this.similar_images = res.data.similar_images;
-              this.similar_characters = res.data.similar_characters;
-            }
-          });
-        }
-      });
+    this.getInfo();
     const url = new URL(window.location);
     url.searchParams.set('n', this.image_number);
     history.replaceState({}, '', url);
   },
   methods: {
+    getInfo: function() {
+      axios.get('{% url 'get_images' status_id %}')
+        .then(res => {
+          this.success = res.data.success;
+          if(this.success) {
+            var n = this.image_number;
+            this.image_data = res.data.image_data;
+            this.characters = this.image_data[n].characters;
+            this.candidates = this.image_data[n].candidates;
+            this.i2vtags = this.image_data[n].i2vtags;
+            this.rating = this.image_data[n].rating;
+            this.media_url = this.image_data[n].media_url;
+            this.is_nsfw = this.image_data[n].is_nsfw;
+            this.collection = this.image_data[n].collection;
+            this.confirmed = this.image_data[n].confirmed;
+            axios.post('{% url 'get_similar_images' %}', {
+                media_url: this.media_url,
+            }).then(res => {
+              if(res.data.success) {
+                this.similar_images = res.data.similar_images;
+                this.similar_characters = res.data.similar_characters;
+              }
+            });
+          }
+        });
+    },
     updateImage: function(n) {
       this.image_number = n;
+      this.characters = this.image_data[n].characters;
       this.i2vtags = this.image_data[n].i2vtags;
       this.rating = this.image_data[n].rating;
       this.media_url = this.image_data[n].media_url;
@@ -196,9 +200,7 @@ const app = Vue.createApp({
       }).then(res => {
       if (res.data.success) {
             alert("キャラクター名が登録されました（"+name+"）");
-            var character = {name_en: name, name_ja: ""};
-            this.characters.push(character);
-            this.confirmed = true;
+            this.getInfo();
       } else {
             alert("キャラクター名の登録に失敗しました（"+name+"）");
       }
@@ -216,7 +218,7 @@ const app = Vue.createApp({
       }).then(res => {
       if (res.data.success) {
             alert("キャラクター名を削除しました（"+name+"）");
-            this.characters = this.characters.filter(item => item.name_en != name);
+            this.getInfo();
       } else {
             alert("キャラクター名の削除に失敗しました（"+name+"）");
       }
