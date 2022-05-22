@@ -23,15 +23,15 @@
     </ul>
     <ul class="list-inline mt-3 v-cloak">
       <li class="list-inline-item">
-        <a v-bind:href="'/search/?i2vtags='+rating" class="badge bg-secondary rounded-pill text-decoration-none">[[ rating ]]</a>
+        <a v-bind:href="'/search/?i2vtags='+encodeURIComponent(rating)" class="badge bg-secondary rounded-pill text-decoration-none">[[ rating ]]</a>
       </li>
       <li class="list-inline-item" v-for="tag in i2vtags">
-        <a v-bind:href="'/search/?i2vtags='+tag" class="badge bg-secondary rounded-pill text-decoration-none">[[ tag ]]</a>
+        <a v-bind:href="'/search/?i2vtags='+encodeURIComponent(tag)" class="badge bg-secondary rounded-pill text-decoration-none">[[ tag ]]</a>
       </li>
     </ul>
     <ul class="list-inline mt-3 v-cloak">
       <li class="list-inline-item" v-for="character in characters">
-        <a v-bind:href="'/search/?character='+character.name_en" class="badge bg-success rounded-pill text-decoration-none">
+        <a v-bind:href="'/search/?character='+encodeURIComponent(character.name_en)" class="badge bg-success rounded-pill text-decoration-none">
           <span v-if='character.name_ja == ""'>[[ character.name_en ]]</span>
           <span v-else>[[ character.name_ja ]]</span>
         </a>
@@ -39,7 +39,7 @@
     </ul>
     <ul class="list-inline mt-3 v-cloak" v-if="characters.length==0">
       <li class="list-inline-item" v-for="character in candidates">
-        <a v-bind:href="'/search/?character='+character.name_en" class="badge bg-dark rounded-pill text-decoration-none">
+        <a v-bind:href="'/search/?character='+encodeURIComponent(character.name_en)" class="badge bg-dark rounded-pill text-decoration-none">
           <span v-if='character.name_ja == ""'>[[ character.name_en ]]</span>
           <span v-else>[[ character.name_ja ]]</span>
         </a>

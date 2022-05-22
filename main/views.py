@@ -127,7 +127,7 @@ def get_similar_images(request):
 def search(request):
     i2vtags = request.GET.get('i2vtags')
     hashtags = request.GET.get('hashtags')
-    keywords = request.GET.get('keyword')
+    keyword = request.GET.get('keyword')
     character = request.GET.get('character')
     only_confirmed = request.GET.get('confirmed', default='f')
     page = request.GET.get('page', default='1')
@@ -157,6 +157,10 @@ def search(request):
             except HashTag.DoesNotExist:
                 return render(request, 'main/search.html', {'notfound': True})
             status_list = status_list.filter(hashtags=tag)
+        images = images.filter(status__in=status_list)
+    if keyword is not None:
+        query += f"&keyword={quote(keyword)}"
+        status_list = Status.objects.filter(text__contains=keyword)
         images = images.filter(status__in=status_list)
     character_tag = None
     if character is not None:
