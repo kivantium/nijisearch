@@ -82,10 +82,10 @@ $('form').submit(function(e){
   }).then(res => {
       console.log(res.data);
       if (res.data.success) {
-	alert("日本語名の登録に成功しました（" + name_ja + "）");
-	$(this).find('button').removeClass('btn-primary').addClass('btn-secondary');
+        alert("日本語名の登録に成功しました（" + name_ja + "）");
+        document.location.reload()
       } else {
-	alert("キャラクター名の登録に失敗しました");
+        alert("キャラクター名の登録に失敗しました");
       }
   });
   return false;
