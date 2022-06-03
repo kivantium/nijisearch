@@ -238,10 +238,10 @@ def register_character(request):
     if "name_ja" in data:
         character, _ = Character.objects.get_or_create(name_ja=data['name_ja'])
     elif "name_en" in data:
-        character, _ = Character.objects.get_or_create(name_en=data['name_en'])
-    else:
-        return JsonResponse({ "success": False, })
-
+        try:
+            character = Character.objects.get(name_en=data['name_en'])
+        except:
+            return JsonResponse({ "success": False, })
     try:
         status = Status.objects.get(status_id=int(data['status_id']))
         image_entry = ImageEntry.objects.get(status=status, image_number=data['image_number'])
