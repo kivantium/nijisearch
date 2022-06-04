@@ -22,7 +22,7 @@ class Character(models.Model):
     name_en = models.TextField()
 
     def __str__(self):
-        return self.name_ja
+        return f"name_en: {self.name_en}, name_ja: {self.name_ja}"
 
 
 class Author(models.Model):

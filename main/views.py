@@ -90,8 +90,12 @@ def get_images(request, status_id):
             "i2vtags": i2vtags,
             "characters": characters,
             "confirmed": entry.confirmed,
+            "duplicated": entry.is_duplicated,
+            "parent_id": str(entry.parent.status.status_id) if entry.parent else None,
+            "parent_number": entry.parent.image_number if entry.parent else None,
             "is_nsfw": entry.is_nsfw,
 	    "collection": entry.collection})
+
     return JsonResponse({
         "success": True, 
         "image_data": data})

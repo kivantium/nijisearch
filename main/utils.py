@@ -179,8 +179,22 @@ def register_status(status_id):
                 if count[pk] >= 3:
                     tag = Character.objects.get(pk=pk)
                     img_entry.characters.add(tag)
-        img_entry.imagehash = str(imagehash.average_hash(img_pil))
+        hash_img = str(imagehash.average_hash(img_pil))
+        img_entry.imagehash = hash_img
         img_entry.save()
+
+        identical_images = ImageEntry.objects.filter(imagehash=hash_img).order_by('status__created_at')
+        if identical_images.count() >= 2:
+            parent = identical_images[0]
+            for image in identical_images[1:]:
+                image.is_duplicated = True
+                image.parent = parent
+                image.save()
+                if image.confirmed:
+                    parent.characters.add(*image.characters.all())
+                    parent.confirmed = True
+            parent.is_duplicated = False
+            parent.save()
 
     entries = ImageEntry.objects.filter(status=status_entry)
     status_entry.contains_illust = any([img.collection for img in entries])

@@ -12,7 +12,8 @@
   <div id="app" class="container">
     <ul class="list-inline">
       <li class="list-inline-item"><a class="badge bg-primary rounded-pill text-decoration-none" href="{% url 'author' screen_name %}">@{{ screen_name }}</a></li>
-      <li class="list-inline-item"><span class="badge bg-danger rounded-pill" v-if="!collection">未収載</span></li>
+      <li class="list-inline-item" v-if="!collection"><span class="badge bg-danger rounded-pill">非収載</span></li>
+      <li class="list-inline-item" v-if="duplicated"><span class="badge bg-secondary rounded-pill" v-bind:href="'/status/'+parent_id+'/?n='+parent_number">再投稿</span> <a v-bind:href="'/status/'+parent_id+'/?n='+parent_number"><small>(初出)</small></a></li>
     </ul>
     <ul class="list-inline">
       {% for hashtag in hashtags %}
@@ -144,6 +145,9 @@ const app = Vue.createApp({
       is_nsfw: undefined,
       collection: undefined,
       confirmed: undefined,
+      duplicated: undefined,
+      parent_id: undefined,
+      parent_number: undefined,
       report_type: "not_illust",
     }
   },
@@ -169,6 +173,9 @@ const app = Vue.createApp({
             this.is_nsfw = this.image_data[n].is_nsfw;
             this.collection = this.image_data[n].collection;
             this.confirmed = this.image_data[n].confirmed;
+            this.duplicated = this.image_data[n].duplicated;
+            this.parent_id = this.image_data[n].parent_id;
+            this.parent_number = this.image_data[n].parent_number;
             axios.post('{% url 'get_similar_images' %}', {
                 media_url: this.media_url,
             }).then(res => {
@@ -188,6 +195,9 @@ const app = Vue.createApp({
       this.media_url = this.image_data[n].media_url;
       this.collection = this.image_data[n].collection;
       this.confirmed = this.image_data[n].confirmed;
+      this.duplicated = this.image_data[n].duplicated;
+      this.parent_id = this.image_data[n].parent_id;
+      this.parent_number = this.image_data[n].parent_number;
       const url = new URL(window.location);
       url.searchParams.set('n', this.image_number);
       history.replaceState({}, '', url);
