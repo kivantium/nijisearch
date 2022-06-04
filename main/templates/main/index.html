@@ -15,12 +15,12 @@
           <label class="form-check-label" for="checkbox_keyword">キーワード検索</label>
         </div>
         <div class="form-check form-check-inline">
-          <input class="form-check-input" type="radio" name="search_type" id="checkbox_tag" value="tag">
-          <label class="form-check-label" for="checkbox_tag">タグ検索</label>
-        </div>
-        <div class="form-check form-check-inline">
           <input class="form-check-input" type="radio" name="search_type" id="checkbox_character" value="character">
           <label class="form-check-label" for="checkbox_character">キャラクター検索</label>
+        </div>
+        <div class="form-check form-check-inline">
+          <input class="form-check-input" type="radio" name="search_type" id="checkbox_tag" value="tag">
+          <label class="form-check-label" for="checkbox_tag">タグ検索</label>
         </div>
         <div class="form-check form-check-inline">
           <input class="form-check-input" type="radio" name="search_type" id="checkbox_id" value="status_id">
@@ -36,10 +36,10 @@
   <div class="collapse" id="description">
     <dl>
 	  <dt>キーワード検索</dt><dl>登録されたツイートをキーワードで全文検索します。AND検索等には対応していないので、スペースも含めてそのまま検索されます。</dl>
-      <dt>I2Vタグ検索</dt><dl>Illustration2Vecによってつけられたタグで検索します。タグを<code>;</code>で区切るとAND検索ができます。スペースにも意味があるので気をつけてください。ハッシュタグ検索はキーワード検索で代用してください</dl>
-      <dt>キャラクター検索検索 (New)</dt><dl>登録されたキャラクター名で検索します。近傍探索でキャラクターが推定された画像は検索結果に赤枠つきで表示されます。</dl>
+      <dt>キャラクター検索</dt><dl>キャラクター名で検索します。</dl>
+      <dt>I2Vタグ検索</dt><dl>Illustration2Vecで推定されたタグで検索します。タグを<code>;</code>で区切るとAND検索ができます。スペース区切りではないので気をつけてください。ハッシュタグ検索はキーワード検索で代用してください</dl>
     </dt>
-      <dt>Tweet ID検索</dt><dl>Tweet IDで検索します。IDは各ツイートのURLから分かります ( <code>https://twitter.com/username/status/XXXXXXXXXXXXXXXXXXX</code> の <code>XXXXXX</code> )<br>登録されていない画像ツイートを検索すると新しく登録されます。</dl>
+      <dt>Tweet ID検索</dt><dl>Tweet IDで検索します。IDは各ツイートのURLから分かります ( <code>https://twitter.com/username/status/XXXXXX?YYYYYYY</code> の <code>XXXXXX</code> ) このフォーマットのURLを直接入力することも可能です。登録されていない画像ツイートを検索すると新しく登録されます。</dl>
     </dt>
   </div>
 
@@ -74,7 +74,8 @@ $('#search').submit(function(){
     } else if(search_type == "character"){
       location.href = "{% url 'search' %}?character=" + encodeURIComponent(query);
     } else {
-      location.href = "/status/" + query;
+      const queries = query.split('?')[0].split('/');
+      location.href = "/status/" + queries[queries.length-1];
     }
     return false;
 })
