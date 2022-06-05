@@ -32,6 +32,9 @@ def index(request):
     images = images.order_by('-pk')[:36]
     return render(request, 'main/index.html', {'images': images})
 
+def about(request):
+    return render(request, 'main/about.html')
+
 def translate(request):
     page = int(request.GET.get('page', default='0'))
     characters = Character.objects.all().annotate(count=Count('characters')).order_by('-count')[100*page:100*(page+1)]
@@ -58,8 +61,6 @@ def translate_request(request):
     character.save()
     return JsonResponse({ "success": True, "message": character.name_en + " is succesfully transtaled: " + character.name_ja })
 
-def about(request):
-    return HttpResponse('About')
 
 def author(request, screen_name):
     try:

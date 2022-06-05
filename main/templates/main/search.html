@@ -21,12 +21,14 @@
     <div class="mt-1">
       <a href="https://dic.pixiv.net/a/{{ character.name_ja }}">ピクシブ百科事典で調べる</a>
       <a class="ms-2" href="https://dic.nicovideo.jp/a/{{ character.name_ja }}">ニコニコ大百科で調べる</a>
-      <button class="btn btn-link" type="button" data-bs-toggle="collapse" data-bs-target="#translation_form" aria-expanded="false" aria-controls="translation_form">キャラクター情報を編集する</button>
+      <a class="ms-2" data-bs-toggle="collapse" href="#translation_form" aria-expanded="false" aria-controls="translation_form">キャラクター情報を編集する</button>
+      <a class="ms-2" data-bs-toggle="collapse" href="#description" aria-expanded="false" aria-controls="description">検索結果について</a>
     </div>
   </div>
   {% else %}
   <div class="mt-1">
   <button class="btn btn-link" type="button" data-bs-toggle="collapse" data-bs-target="#translation_form" aria-expanded="false" aria-controls="translation_form">キャラクター情報を編集する</button>
+  <button class="btn btn-link" type="button" data-bs-toggle="collapse" href="#description" aria-expanded="false" aria-controls="description">検索結果について</a>
   </div>
   {% endif %}
   <div class="collapse" id="translation_form">
@@ -35,7 +37,7 @@
       <div class="col-auto">
         <div class="input-group input-group-sm">
           <div class="input-group-prepend">
-            <span class="input-group-text" id="inputGroup-sizing-sm">日本語表記</span>
+            <span class="input-group-text">日本語表記</span>
           </div>
   	<input type="text" class="form-control name_ja" id="translation" value="{{character.name_ja}}">
         </div>
@@ -44,8 +46,17 @@
         <input type="hidden" class="pk" value="{{ character.pk }}">
         <button type="submit" class="btn btn-primary mb-2">送信</button>
       </div>
+      <div>（原則的にピクシブ百科事典の表記に従うこととします）</div>
     </form>
     <hr>
+  </div>
+  <div class="collapse" id="description">
+    <p class="mt-3">画像の左上に表示される赤丸はまだキャラクター情報が自動推定されたことを示しています</p>
+  </div>
+  {% else %}
+  <a class="my-3" data-bs-toggle="collapse" href="#description" role="button" aria-expanded="false" aria-controls="description">検索結果について</a>
+  <div class="collapse" id="description">
+    <p class="mt-3">画像の左上に表示される赤丸はまだキャラクター情報が登録されていないことを示しています</p>
   </div>
   {% endif %}
   {% if notfound %}

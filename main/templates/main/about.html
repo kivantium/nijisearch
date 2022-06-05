@@ -1,0 +1,101 @@
+{% extends 'main/base.html' %}
+
+{% block page_title%}このサイトについて{% endblock %}
+
+{% block content %}
+<div class="container">
+<h3 class="mt-4">このサイトについて</h3>
+  <p>Twitterにはたくさんのイラストが投稿されていますが、Twitterのイラスト検索機能はpixivなどのイラストに特化したサイトと比べると貧弱なため、好みのイラストを探すのが難しいです。また、最近ではシャドウバンなどの影響で検索してもイラストが表示されない場合があります。このサービスはTwitterに投稿されたイラストの検索に特化したサイトとして開発を行っています。</p>
+  <ul>
+    <li>運営者: <a href="https://twitter.com/kivantium">@kivantium</a></li>
+    <li><a href="https://forms.gle/4nuyFsqxqFrKe8Uz9">問い合わせフォーム</a></li>
+  </ul>
+  <hr class="my-4">
+  <h4>実装済み機能</h4>
+  <dl>
+    <dt>二次元画像の自動収集</dt>
+    <dd>
+      <ul>
+        <li>機械学習を使ってツイートに含まれる画像がイラストかどうかを自動判定しています。</li>
+        <li>よくある誤分類に対する方針は以下の通りです。
+          <ul>
+            <li>コスプレ画像 ― 収集しません</li>
+            <li>漫画や同人誌などの購入報告 ― 収集しません</li>
+            <li>アニメやゲーム等のスクリーンショット ― 収集しません</li>
+            <li>VTuberなどの3Dモデルの画像 ― 収集しません（ファンアートは収集します）</li>
+            <li>色紙等に書いたイラストを撮影したもの ― 高品質なもののみ収集します</li>
+            <li>漫画形式のイラスト ― 基本的に収集しませんが、文字の割合が少ないカラーのものは収集します</li>
+            <li>漫画や同人誌などの宣伝 ― 告知用イラストなどは収集しますが、単なる表紙画像・文字が多い告知などは収集しません</li>
+          </ul>
+      </ul>
+    </dd>
+    <dt>自動タグ付け</dt>
+    <dd><a href="https://github.com/rezoo/illustration2vec">Illustration2Vec</a>を用いて収集した画像に自動でタグ付けを行います。</dd>
+    <dt>キャラクター検索</dt>
+    <dd>イラストをキャラクターごとに検索できます。キャラクターは機械学習による自動推定と目視確認によって決定しています。</dd>
+    <dt>絵師検索</dt>
+    <dd>特定のユーザーが過去に投稿したイラストをまとめて表示できます</dd>
+  </dl>
+  <hr class="my-4">
+  <h4>よくあるかもしれない疑問とその答え</h4>
+  <h5 class="mt-4">ログインすると何ができるようになりますか？</h5>
+  <ul>
+      <li>NSFW画像を表示できるようになります（ログイン後、設定画面で「NSFW画像を表示する」にチェックを入れてください）<ul><li>旧バージョンでは性的コンテンツが含まれると警告されて広告を停止されてしまったため、現バージョンではログインしてない場合はNSFW画像を表示できないことにしました。</li></ul>
+    <li>キャラクター情報を編集できるようになります（ログイン後、設定画面で「イラスト情報編集画面を表示する」にチェックを入れてください）</li>
+    <li>将来的に広告が導入されたときには広告が消えます。</li>
+  </ul>
+  <h5 class="mt-4">開発に参加するにはどうすればいいですか？</h5>
+  <ul>
+    <li><a href="https://discord.gg/tUvWg7S">開発者Discord</a>に参加してください</li>
+    <li><a href="https://github.com/kivantium/nijisearch">GitHub</a>に直接Pull Requestを送ることも可能です</li>
+  </ul>
+  <h5 class="mt-4">無断でツイートを表示してもいいんですか？</h5>
+  <p><a href="https://developer.twitter.com/ja/developer-terms/agreement-and-policy">Twitterの開発者利用規約</a> I-Bに基づいてツイートを表示しています。</p>
+  <div class="card">
+    <div class="card-body">
+      <blockquote>
+        <p><b>B. Twitterから付与されるライセンス。</b>Twitterは（以下に規定される権利付与の条件として）本契約および<a href="https://developer.twitter.com/ja/developer-terms/policy">開発者ポリシー</a>の規定に従い、以下の目的のためだけに、非独占的、ロイヤルティフリー、譲渡不可、サブライセンス不可、取り消し可能なライセンスを開発者に付与し、開発者はこれを承諾するものとします。</p>
+        <ul>
+          <li>2. 本契約によって許可されたところに従い、開発者のサービス上および開発者のサービスを通じて、合理的な数量のTwitterコンテンツのコピーを作成し、エンドユーザーに対してコンテンツを表示すること</li>
+        </ul>
+      </blockquote>
+    </div>
+  </div>
+  <p>Twitterに投稿されたイラストをまとめる類似サービスも規約上問題ないとされています。（<a href="https://nlab.itmedia.co.jp/nl/articles/1808/03/news121.html">「勝手に転載しないで！」イラストまとめサービス「Buhitter」が大炎上 → Twitterは「規約上問題ない」</a>）</p>
+  <p>開発者ポリシーには準拠しているつもりですが、至らないところがあったら教えてください。</p>
+  <h5 class="mt-4">著作権の侵害ではないですか？</h5>
+  <p>このサイトの運営は、<a href="https://elaws.e-gov.go.jp/search/elawsSearch/elaws_search/lsg0500/detail?lawId=345AC0000000048#387">著作権法第四十七条の五</a>で定められている「検索情報の特定又は所在に関する情報を検索し、及びその結果を提供すること」および「電子計算機による情報解析を行い、及びその結果を提供すること」に該当する行為であるため、軽微利用の範囲で複製若しくは公衆送信を行うことができると考えています。このサイトで行っている情報解析および画像のサムネイル表示は軽微利用の範囲であると解釈しています。</p>
+  <p><a href="https://elaws.e-gov.go.jp/search/elawsSearch/elaws_search/lsg0500/detail?lawId=345M50000080026#71">著作権法施行規則第四条の五</a>に定められた「著作物等の利用を適正に行うために必要な措置」として、当該要件の解釈を記載した書類を閲覧し、連絡先として<a href="https://forms.gle/4nuyFsqxqFrKe8Uz9">問い合わせフォーム</a>を設置しました。</p>
+  <hr class="my-4">
+  <h5>広告の配信について</h5>
+  <ul>
+      <li>当サイトはGoogle Adsenseを利用して広告を配信する予定です。</li>
+  </ul>
+</div>
+
+</div>
+{% endblock %}
+
+{% block script %}
+<script
+  src="https://code.jquery.com/jquery-3.6.0.slim.min.js"
+  integrity="sha256-u7e5khyithlIdTpu22PHhENmPcRdFiHRjhAuHcs05RI="
+  crossorigin="anonymous"></script>
+<script>
+$('#search').submit(function(){
+    const search_type = $('input:radio[name="search_type"]:checked').val();
+    const query = $('#query').val();
+    if (search_type == "tag") {
+      location.href = "{% url 'search' %}?i2vtags=" + encodeURIComponent(query);
+    } else if(search_type == "keyword"){
+      location.href = "{% url 'search' %}?keyword=" + encodeURIComponent(query);
+    } else if(search_type == "character"){
+      location.href = "{% url 'search' %}?character=" + encodeURIComponent(query);
+    } else {
+      const queries = query.split('?')[0].split('/');
+      location.href = "/status/" + queries[queries.length-1];
+    }
+    return false;
+})
+</script>
+{% endblock %}

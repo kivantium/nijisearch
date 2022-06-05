@@ -32,7 +32,7 @@
     </ul>
     <ul class="list-inline mt-3 v-cloak">
       <li class="list-inline-item" v-for="character in characters">
-          <a v-bind:href="'/search/?character='+encodeURIComponent(character.name_en)" class="badge bg-success rounded-pill text-decoration-none" :class="{ 'bg-success': confirmed, 'bg-dark': !confirmed }">
+          <a v-bind:href="'/search/?character='+encodeURIComponent(character.name_en)" class="badge rounded-pill text-decoration-none" :class="{ 'bg-success': confirmed, 'bg-dark': !confirmed }">
           <span v-if='character.name_ja == ""'>[[ character.name_en ]]</span>
           <span v-else>[[ character.name_ja ]]</span>
         </a>
@@ -85,11 +85,11 @@
     <div class="form-group">
       <div class="form-check form-check-inline" v-if="collection">
         <input class="form-check-input" type="radio" v-model="report_type" id="not_illust" value="not_illust">
-        <label class="form-check-label" for="not_illust">この画像はイラストではありません</label>
+        <label class="form-check-label" for="not_illust">この画像を検索結果に表示しない</label>
       </div>
       <div class="form-check form-check-inline" v-else>
         <input class="form-check-input" type="radio" v-model="report_type" id="is_illust" value="is_illust">
-        <label class="form-check-label" for="is_illust">この画像はイラストです</label>
+        <label class="form-check-label" for="is_illust">この画像を検索結果に表示する</label>
       </div>
       <div class="form-check form-check-inline" v-if="is_nsfw">
         <input class="form-check-input" type="radio" v-model="report_type" id="radio_safe" value="safe">
@@ -117,6 +117,17 @@
     <div class="col-4 col-md-3 col-lg-2 my-1 px-1" v-for="sim in similar_images">
       <a v-bind:href="sim.status_url"><img class="img-fluid" v-bind:src="sim.media_url"></a></div>
   </div>
+  <hr>
+  <h2 class="h5 mt-4">タグ表示について</h2>
+  <ul class="mb-5">
+      <li><span class="badge bg-primary rounded-pill text-decoration-none">青色のタグ</span> はイラストを投稿したアカウントを示しています。クリックすると各アカウントのページに移動します。</li>
+      <li><span class="badge bg-success rounded-pill text-decoration-none bg-info">水色のタグ</span> はハッシュタグを示しています。クリックするとハッシュタグ検索結果に移動します</li>
+      <li><span class="badge bg-secondary rounded-pill text-decoration-none">灰色のタグ</span> は<a href="https://github.com/rezoo/illustration2vec">Illustration2Vec</a>で推定されたタグを示しています。クリックするとタグ検索結果に移動します</li>
+      <li><span class="badge bg-success rounded-pill text-decoration-none">緑色のタグ</span> は確認済みのキャラクター名を示しています。クリックするとキャラクター検索結果に移動します</li>
+      <li><span class="badge bg-dark rounded-pill text-decoration-none">黒色のタグ</span> は自動推定されたキャラクター名を示しています。クリックするとキャラクター検索結果に移動します</li>
+      <li><span class="badge bg-danger rounded-pill text-decoration-none">非収載</span> はその画像が検索結果に表示されないことを示しています。</li>
+      <li><span class="badge bg-secondary rounded-pill text-decoration-none">再投稿</span> は同一の画像が以前に投稿されていることを示しています。「初出」をクリックすると収集されている同一画像の中で最も古い画像のページに移動します</li>
+  </ul>
 </div>
 {% endif %}
 {% endblock %}
