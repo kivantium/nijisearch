@@ -16,7 +16,12 @@ import requests
 import threading
 import itertools
 import json
+import logging
 from urllib.parse import urlparse, quote
+
+def log_info(msg):
+    logger = logging.getLogger('command')
+    logger.info(msg)
 
 def index(request):
     images = ImageEntry.objects.filter(collection=True)
@@ -285,21 +290,24 @@ def report(request):
 
 @csrf_exempt
 @require_POST
+@login_required
 def register_character(request):
     data = json.loads(request.body)
-    if "name_ja" in data:
-        character, _ = Character.objects.get_or_create(name_ja=data['name_ja'])
-    elif "name_en" in data:
+    if "name_en" in data:
         try:
             character = Character.objects.get(name_en=data['name_en'])
         except:
             return JsonResponse({ "success": False, })
+    else:
+        return JsonResponse({ "success": False, })
     try:
         status = Status.objects.get(status_id=int(data['status_id']))
         image_entry = ImageEntry.objects.get(status=status, image_number=data['image_number'])
         image_entry.characters.add(character)
         image_entry.confirmed = True
         image_entry.save()
+        user = UserSocialAuth.objects.get(user_id=request.user.id)
+        log_info(f"Register {data['name_en']} to status {data['status_id']} (n={data['image_number']}) by {user.access_token['screen_name']}")
         return JsonResponse({ "success": True, })
     except:
         return JsonResponse({ "success": False, })
@@ -311,15 +319,14 @@ def delete_character(request):
     try:
         character = Character.objects.get(name_en=data['name'])
     except Character.DoesNotExist:
-        try:
-            character = Character.objects.get(name_ja=data['name'])
-        except Character.DoesNotExist:
-            return JsonResponse({ "success": False, })
+        return JsonResponse({ "success": False, })
     status = Status.objects.get(status_id=int(data['status_id']))
     image_entry = ImageEntry.objects.get(status=status, image_number=data['image_number'])
     image_entry.characters.remove(character)
     image_entry.confirmed = True
     image_entry.save()
+    user = UserSocialAuth.objects.get(user_id=request.user.id)
+    log_info(f"Delete {data['name']} from status {data['status_id']} (n={data['image_number']}) by {user.access_token['screen_name']}")
     return JsonResponse({ "success": True, })
 
 @csrf_exempt
