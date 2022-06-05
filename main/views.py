@@ -5,9 +5,11 @@ from django.conf import settings
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 from django.db.models import Count, Q
+from django.contrib.auth.decorators import login_required
+from social_django.models import UserSocialAuth
 
 from .utils import register_status
-from .models import Author, Status, ImageEntry, I2VTag, HashTag, Character
+from .models import Author, Status, ImageEntry, I2VTag, HashTag, Character, UserProfile
 
 import collections
 import requests
@@ -17,13 +19,35 @@ import json
 from urllib.parse import urlparse, quote
 
 def index(request):
-    images = ImageEntry.objects.filter(collection=True).order_by('-pk')[:120]
-    return render(request, 'main/index.html', {'images': images,})
+    images = ImageEntry.objects.filter(collection=True)
+    if request.user.is_authenticated:
+        user = UserSocialAuth.objects.get(user_id=request.user.id)
+        profile, _ = UserProfile.objects.get_or_create(user=user)
+        if not profile.show_nsfw:
+            safe = I2VTag.objects.get(name='safe')
+            images = images.filter(i2vtags=safe)
+    else:
+        safe = I2VTag.objects.get(name='safe')
+        images = images.filter(i2vtags=safe)
+    images = images.order_by('-pk')[:36]
+    return render(request, 'main/index.html', {'images': images})
 
 def translate(request):
     page = int(request.GET.get('page', default='0'))
     characters = Character.objects.all().annotate(count=Count('characters')).order_by('-count')[100*page:100*(page+1)]
     return render(request, 'main/translate.html', {'characters': characters, 'page': page})
+
+@login_required
+def user_settings(request):
+    user = UserSocialAuth.objects.get(user_id=request.user.id)
+    profile = UserProfile.objects.get(user=user)
+    if request.method == 'POST':
+        profile.show_nsfw = True if request.POST.get('show_nsfw', 'off') == 'on' else False
+        profile.editor = True if request.POST.get('editor', 'off') == 'on' else False
+        profile.save()
+        return render(request, 'main/settings.html', {'user': user, 'profile': profile, 'saved': True})
+    else:
+        return render(request, 'main/settings.html', {'user': user, 'profile': profile})
 
 @csrf_exempt
 @require_POST
@@ -38,16 +62,24 @@ def about(request):
     return HttpResponse('About')
 
 def author(request, screen_name):
-    print(screen_name)
     try:
         author = Author.objects.get(screen_name=screen_name)
     except:
         return HttpResponse('Not found')
-    image_entry_list = ImageEntry.objects.filter(author=author)
-    image_count = image_entry_list.count()
+    images = ImageEntry.objects.filter(author=author, collection=True)
+    if request.user.is_authenticated:
+        user = UserSocialAuth.objects.get(user_id=request.user.id)
+        profile, _ = UserProfile.objects.get_or_create(user=user)
+        if not profile.show_nsfw:
+            safe = I2VTag.objects.get(name='safe')
+            images = images.filter(i2vtags=safe)
+    else:
+        safe = I2VTag.objects.get(name='safe')
+        images = images.filter(i2vtags=safe)
+    image_count = images.count()
     return render(request, 'main/author.html', {
         'author': author,
-        'image_entry_list': image_entry_list,
+        'image_entry_list': images,
         'image_count': image_count})
 
 def register(request, status_id):
@@ -65,12 +97,20 @@ def status(request, status_id):
         t.start()
         return render(request, 'main/status.html', {'registered': False, 'status_id': status_id})
 
+    editor = False
+    if request.user.is_authenticated:
+        user = UserSocialAuth.objects.get(user_id=request.user.id)
+        profile = UserProfile.objects.get(user=user)
+        if profile.editor:
+            editor = True
+
     return render(request, 'main/status.html', {
         'registered': True,
         'status_id': status_id,
         'screen_name': screen_name,
         'hashtags': hashtags,
-        'number': number})
+        'number': number,
+        'editor': editor})
 
 def get_images(request, status_id):
     try:
@@ -136,8 +176,6 @@ def search(request):
     page = request.GET.get('page', default='1')
     page = int(page)
     order = request.GET.get('order', default='created_at')
-    safe = request.GET.get('safe', default='t')
-    safe = True if safe == 't' else False
     only_confirmed = True if only_confirmed == 't' else False
 
     images = ImageEntry.objects.filter(collection=True)
@@ -181,11 +219,20 @@ def search(request):
             images = images.filter(Q(characters=character_tag))
 
     images = images.distinct()
+    if request.user.is_authenticated:
+        user = UserSocialAuth.objects.get(user_id=request.user.id)
+        profile, _ = UserProfile.objects.get_or_create(user=user)
+        if not profile.show_nsfw:
+            safe = I2VTag.objects.get(name='safe')
+            images = images.filter(i2vtags=safe)
+    else:
+        safe = I2VTag.objects.get(name='safe')
+        images = images.filter(i2vtags=safe)
     images_per_page = 120
     images_count = images.count()
     last_page = -(-images_count // images_per_page)  # round up
     prev_page = request.path + f'?{query}&page={page-1}' if page != 1 else None
-    next_page = request.path + f'?{query}&page={page+1}' if page != last_page else None
+    next_page = request.path + f'?{query}&page={page+1}' if page != last_page and last_page != 0 else None
 
     images = images.order_by('-pk')[images_per_page*(page-1):images_per_page*page]
 

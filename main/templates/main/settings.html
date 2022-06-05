@@ -1,0 +1,25 @@
+{% extends 'main/base.html' %}
+
+{% block page_title%}設定 - にじさーち{% endblock %}
+
+{% block content %}
+{% if saved %} <div class="p-3 mb-2 bg-success text-white">設定は正常に更新されました</div>{% endif %}
+<div class="container">
+  <h2 class="mt-3 h4">{{ user.access_token.screen_name }} さんの設定</h2>
+  <form class="mt-3" action="{% url 'settings' %}" method="post">
+    {% csrf_token %}
+    <div class="form-check">
+        <input type="checkbox" class="form-check-input" id="show_nsfw" name="show_nsfw"{% if profile.show_nsfw %} checked{% endif %}>
+      <label class="form-check-label" for="show_nsfw">NSFW画像を表示する</label>
+    </div>
+    <div class="form-check">
+        <input type="checkbox" class="form-check-input" id="editor" name="editor"{% if profile.editor %} checked{% endif %}>
+      <label class="form-check-label" for="editor">イラスト情報編集画面を表示する</label>
+    </div>
+    <button type="submit" class="btn btn-primary mt-3">送信</button>
+  </form>
+</div>
+{% endblock %}
+
+{% block script %}
+{% endblock %}

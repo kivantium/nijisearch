@@ -44,23 +44,10 @@
       <div class="col-1 my-auto"><button class="btn btn-outline-secondary" v-if="image_number < image_data.length-1" v-on:click="updateImage(image_number+1)"><i class="bi bi-arrow-right"></i></button></div>
     </div>
   {% endif %}
+  {% if editor %}
   <hr>
-  {% if registered %}
   <h2 class="h5 mt-4">キャラクター名の登録</h2>
-  <div v-if="similar_characters.length > 0">
-    <p class="h6 mt-4">候補をクリックしてください</p>
-    <ul class="list-inline mt-3">
-      <li class="list-inline-item" v-for="name in similar_characters">
-        <button class="btn btn-outline-secondary btn-sm" v-on:click="registerName(name)">[[ name ]]</button>
-      </li>
-      <li class="list-inline-item"><button class="btn btn-outline-secondary btn-sm" v-on:click="registerName('original')">original</button>
-      </li>
-    </ul>
-    <p class="h6 mt-4">正しい名前が候補にない場合はキャラクター名を英語で入力してください</p>
-  </div>
-  <div v-else>
-    <p class="h6 mt-4">キャラクター名を英語で入力してください</p>
-   </div>
+  <p class="h6 mt-4">キャラクター名を英語で入力してください（候補に表示されない名前は登録できません）</p>
   <div class="row gy-2 gx-3 align-items-center">
     <div class="col-auto">
       <input type="text" class="form-control" v-bind="character_name" ref="input" list="candidates" autocomplete="off" @keyup="suggest_character">
@@ -68,6 +55,16 @@
     <div class="col-auto">
       <button v-on:click="submitInfo" class="btn btn-primary">登録</button>
     </div>
+  </div>
+  <div v-if="similar_characters.length > 0">
+    <p class="h6 mt-4">または候補をクリックしてください</p>
+    <ul class="list-inline mt-3">
+      <li class="list-inline-item" v-for="name in similar_characters">
+        <button class="btn btn-outline-secondary btn-sm" v-on:click="registerName(name)">[[ name ]]</button>
+      </li>
+      <li class="list-inline-item"><button class="btn btn-outline-secondary btn-sm" v-on:click="registerName('original')">original</button>
+      </li>
+    </ul>
   </div>
   <datalist id="candidates">
     <option v-for="name in name_candidates" :value="name">
@@ -109,9 +106,12 @@
     </div>
     <button type="submit" id="report" class="btn btn-danger">報告する</button>
   </form>
+  {% endif %}
   <hr>
   <h2 class="h5 mt-5">出典ツイート</h2>
     <blockquote class="twitter-tweet tw-align-center" data-conversation="none"><a href="https://twitter.com/user/status/{{ status_id }}"></a></blockquote>
+{% if registered %}
+  <hr>
   <h2 class="h5 mt-5">類似イラスト</h2>
   <div class="row">
     <div class="col-4 col-md-3 col-lg-2 my-1 px-1" v-for="sim in similar_images">

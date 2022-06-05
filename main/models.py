@@ -1,4 +1,11 @@
 from django.db import models
+from social_django.models import UserSocialAuth
+
+
+class UserProfile(models.Model):
+    user = models.OneToOneField(UserSocialAuth, on_delete=models.CASCADE, null=True)
+    show_nsfw = models.BooleanField(default=False)
+    editor = models.BooleanField(default=False)
 
 class I2VTag(models.Model):
     TAG_TYPES = (

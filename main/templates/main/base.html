@@ -13,7 +13,17 @@
     <nav class="navbar navbar-expand-lg navbar-dark" style="background-color: #00ccff;">
       <div class="container-fluid">
         <a href="{% url 'index' %}" class="navbar-brand fw-bold">にじさーち改</a>
+          <a class="navbar-brand" href="#" role="button" id="nav_menu" data-bs-toggle="dropdown" aria-expanded="false"><span class="navbar-toggler-icon"></span></a>
+          <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="nav_menu">
+            {% if request.user.is_authenticated %}
+            <li><a class="dropdown-item" href="{% url 'settings' %}">ユーザー設定</a></li>
+            <li><a class="dropdown-item" href="/logout">ログアウト</a></li>
+            {% else %}
+            <li><a class="dropdown-item" href="{% url 'social:begin' 'twitter' %}">Twitterでログイン</a></li>
+            {% endif %}
+          </ul>
       </div>
+
     </nav>
     {% block content %}
     {% endblock %}

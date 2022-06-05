@@ -1,10 +1,12 @@
 from django.urls import path
+import django.contrib.auth.views
 
 from . import views
 
 urlpatterns = [
     path('', views.index, name='index'),
     path('about/', views.about, name='about'),
+    path('settings/', views.user_settings, name='settings'),
     path('register/<int:status_id>/', views.register, name='register'),
     path('author/<str:screen_name>/', views.author, name='author'),
     path('search/', views.search, name='search'),
@@ -18,4 +20,6 @@ urlpatterns = [
     path('register_character/', views.register_character, name='register_character'),
     path('delete_character/', views.delete_character, name='delete_character'),
     path('suggest_character/', views.suggest_character, name='suggest_character'),
+    path('logout/', django.contrib.auth.views.LogoutView.as_view(template_name = 'main/logout.html'),
+         name='logout'),
 ]
