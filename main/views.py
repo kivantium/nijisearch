@@ -4,7 +4,7 @@ from django.core import serializers
 from django.conf import settings
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
-from django.db.models import Count, Q
+from django.db.models import Count
 from django.contrib.auth.decorators import login_required
 from social_django.models import UserSocialAuth
 
@@ -226,11 +226,10 @@ def search(request):
                 character_tag = Character.objects.get(name_ja=character)
             except Character.DoesNotExist:
                 return render(request, 'main/search.html', {'character': character, 'notfound': True})
-        images = images.filter(Q(characters=character_tag))
+        images = images.filter(characters=character_tag)
         if only_confirmed:
             images = images.filter(confirmed=True)
 
-    images = images.distinct()
     if request.user.is_authenticated:
         user = UserSocialAuth.objects.get(user_id=request.user.id)
         profile, _ = UserProfile.objects.get_or_create(user=user)
@@ -240,16 +239,30 @@ def search(request):
     else:
         safe = I2VTag.objects.get(name='safe')
         images = images.filter(i2vtags=safe)
+
     images_per_page = 120
     images_count = images.count()
     last_page = -(-images_count // images_per_page)  # round up
-    prev_page = request.path + f'?{query}&page={page-1}' if page != 1 else None
-    next_page = request.path + f'?{query}&page={page+1}' if page != last_page and last_page != 0 else None
+    url = request.path + f'?{query}'
+    if not only_confirmed:
+        url += '&confirmed=f'
 
-    images = images.order_by('-pk')[images_per_page*(page-1):images_per_page*page]
+    if order == 'like':
+        images = images.order_by('-status__like_count', 'image_number')
+        url += '&order=like'
+    elif order == 'id':
+        images = images.order_by('-pk', 'image_number')
+        url += '&order=id'
+    else:
+        images = images.order_by('-status__created_at', 'image_number')
+
+    prev_page = url + f'&page={page-1}' if page != 1 else None
+    next_page = url + f'&page={page+1}' if page != last_page and last_page != 0 else None
+
+    images = images[images_per_page*(page-1):images_per_page*page]
 
     return render(request, 'main/search.html', 
-            {'images': images, 'images_count': images_count,
+            {'images': images, 'images_count': images_count, 'order': order,
              'only_confirmed': only_confirmed, 'editor': editor,
              'i2vtags': i2vtags, 'character': character_tag,
              'prev_page': prev_page, 'next_page': next_page})

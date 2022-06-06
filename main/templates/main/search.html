@@ -1,6 +1,6 @@
 {% extends 'main/base.html' %}
 
-{% block page_title%}にじさーち{% endblock %}
+{% block page_title%}{% if character %}{% if character.name_ja %}{{ character.name_ja }}{% else %}{{ character.name_en }}{% endif %}の{% endif %}イラスト検索結果{% endblock %}
 
 {% block content %}
 <div class="container">
@@ -17,7 +17,7 @@
   {% if character %}
   {% if character.name_ja %}
   <div class="mt-2 ms-2">
-    <div>英語表記 <code>{{ character.name_en }}</code></div>
+    <h3 class="h6">英語表記: <code>{{ character.name_en }}</code></h3>
     <div class="mt-1">
       <a href="https://dic.pixiv.net/a/{{ character.name_ja }}">ピクシブ百科事典で調べる</a>
       <a class="ms-2" href="https://dic.nicovideo.jp/a/{{ character.name_ja }}">ニコニコ大百科で調べる</a>
@@ -65,6 +65,12 @@
   {% endif %}
   {% if notfound %}
   <p>該当する画像がありませんでした</p>
+  {% else %}
+  <select class="form-select mt-3" id="order">
+    <option value="created_at"{% if order == "created_at" %} selected{% endif %}>投稿日時が新しい順</option>
+    <option value="like"{% if order == "like" %} selected{% endif %}>いいね数が新しい順</option>
+    <option value="id"{% if order == "id" %} selected{% endif %}>データベース登録が新しい順</option>
+  </select>
   {% endif %}
   <div class="mt-4 row g-0">
     {% for image in images %}
@@ -111,11 +117,19 @@ $('#show_unconfirmed').change(function() {
     if (this.checked) {
         search_params.set('confirmed', 'f');
     } else {
-        search_params.delete('confirmed', 't');
+        search_params.delete('confirmed');
     }
     var new_url = url.toString();
     window.location.replace(new_url);
 });
 
+$('#order').change(function() {
+    var url = new URL(window.location);
+    var search_params = url.searchParams;
+    search_params.set('order', $('#order').val());
+    search_params.delete('page');
+    var new_url = url.toString();
+    window.location.replace(new_url);
+});
 </script>
 {% endblock %}
