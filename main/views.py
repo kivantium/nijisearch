@@ -178,11 +178,18 @@ def search(request):
     hashtags = request.GET.get('hashtags')
     keyword = request.GET.get('keyword')
     character = request.GET.get('character')
-    only_confirmed = request.GET.get('confirmed', default='f')
+    only_confirmed = request.GET.get('confirmed', default='t')
     page = request.GET.get('page', default='1')
     page = int(page)
     order = request.GET.get('order', default='created_at')
     only_confirmed = True if only_confirmed == 't' else False
+
+    editor = False
+    if request.user.is_authenticated:
+        user = UserSocialAuth.objects.get(user_id=request.user.id)
+        profile = UserProfile.objects.get(user=user)
+        if profile.editor:
+            editor = True
 
     images = ImageEntry.objects.filter(collection=True)
     query = ""
@@ -219,10 +226,9 @@ def search(request):
                 character_tag = Character.objects.get(name_ja=character)
             except Character.DoesNotExist:
                 return render(request, 'main/search.html', {'character': character, 'notfound': True})
+        images = images.filter(Q(characters=character_tag))
         if only_confirmed:
-            images = images.filter(Q(characters=character_tag) & Q(confirmed=True))
-        else:
-            images = images.filter(Q(characters=character_tag))
+            images = images.filter(confirmed=True)
 
     images = images.distinct()
     if request.user.is_authenticated:
@@ -244,6 +250,7 @@ def search(request):
 
     return render(request, 'main/search.html', 
             {'images': images, 'images_count': images_count,
+             'only_confirmed': only_confirmed, 'editor': editor,
              'i2vtags': i2vtags, 'character': character_tag,
              'prev_page': prev_page, 'next_page': next_page})
 

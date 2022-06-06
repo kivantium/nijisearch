@@ -21,13 +21,13 @@
     <div class="mt-1">
       <a href="https://dic.pixiv.net/a/{{ character.name_ja }}">ピクシブ百科事典で調べる</a>
       <a class="ms-2" href="https://dic.nicovideo.jp/a/{{ character.name_ja }}">ニコニコ大百科で調べる</a>
-      <a class="ms-2" data-bs-toggle="collapse" href="#translation_form" aria-expanded="false" aria-controls="translation_form">キャラクター情報を編集する</button>
+      {% if editor %}<a class="ms-2" data-bs-toggle="collapse" href="#translation_form" aria-expanded="false" aria-controls="translation_form">キャラクター情報を編集する</button>{% endif %}
       <a class="ms-2" data-bs-toggle="collapse" href="#description" aria-expanded="false" aria-controls="description">検索結果について</a>
     </div>
   </div>
   {% else %}
   <div class="mt-1">
-  <button class="btn btn-link" type="button" data-bs-toggle="collapse" data-bs-target="#translation_form" aria-expanded="false" aria-controls="translation_form">キャラクター情報を編集する</button>
+  {% if editor %}<button class="btn btn-link" type="button" data-bs-toggle="collapse" data-bs-target="#translation_form" aria-expanded="false" aria-controls="translation_form">キャラクター情報を編集する</button>{% endif %}
   <button class="btn btn-link" type="button" data-bs-toggle="collapse" href="#description" aria-expanded="false" aria-controls="description">検索結果について</a>
   </div>
   {% endif %}
@@ -51,7 +51,11 @@
     <hr>
   </div>
   <div class="collapse" id="description">
-    <p class="mt-3">画像の左上に表示される赤丸はまだキャラクター情報が自動推定されたことを示しています</p>
+    <p class="mt-3">画像の左上に表示される赤丸はキャラクター情報が自動推定されたことを示しています</p>
+  </div>
+  <div class="mt-3 form-check">
+      <input type="checkbox" class="form-check-input" id="show_unconfirmed"{% if not only_confirmed %} checked{%endif %}>
+    <label class="form-check-label" for="show_unconfirmed">キャラクター自動推定の結果も表示する</label>
   </div>
   {% else %}
   <a class="my-3" data-bs-toggle="collapse" href="#description" role="button" aria-expanded="false" aria-controls="description">検索結果について</a>
@@ -100,6 +104,18 @@ $('form').submit(function(e){
       }
   });
   return false;
-})
+});
+$('#show_unconfirmed').change(function() {
+    var url = new URL(window.location);
+    var search_params = url.searchParams;
+    if (this.checked) {
+        search_params.set('confirmed', 'f');
+    } else {
+        search_params.delete('confirmed', 't');
+    }
+    var new_url = url.toString();
+    window.location.replace(new_url);
+});
+
 </script>
 {% endblock %}
