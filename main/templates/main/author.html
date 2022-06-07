@@ -20,10 +20,10 @@
     <option value="id"{% if order == "id" %} selected{% endif %}>データベース登録が新しい順</option>
   </select>
 
-  <div class="mt-4 row g-0">
+  <div class="mt-4 row row-cols-2 row-cols-sm-3 row-cols-md-4 row-cols-lg-6 g-0" id="grid" data-masonry='{"percentPosition": true}'>
     {% for image in image_entry_list %}
-      <div class="col-6 col-sm-4 col-md-3 col-lg-2 mb-0">
-          <a href="{% url 'status' image.status.status_id %}"><img class="w-100 img-thumbnail" src="{{image.media_url}}:thumb"></a>
+      <div class="col mb-0">
+          <a href="{% url 'status' image.status.status_id %}"><img class="w-100 img-thumbnail" src="{{image.media_url}}:small" onerror="this.style.display='none'"></a>
       </div>
     {% endfor %}
   </div>
@@ -35,6 +35,7 @@
   src="https://code.jquery.com/jquery-3.6.0.slim.min.js"
   integrity="sha256-u7e5khyithlIdTpu22PHhENmPcRdFiHRjhAuHcs05RI="
   crossorigin="anonymous"></script>
+<script src="https://unpkg.com/masonry-layout@4/dist/masonry.pkgd.min.js"></script>
 <script>
 $('#order').change(function() {
     var url = new URL(window.location);
@@ -42,6 +43,17 @@ $('#order').change(function() {
     search_params.set('order', $('#order').val());
     var new_url = url.toString();
     window.location.replace(new_url);
+});
+var $grid = document.querySelector('#grid');
+var msnry = new Masonry($grid, {
+    itemSelector: '.col',
+    percentPosition: true
+});
+var $images = $grid.querySelectorAll('img');
+$images.forEach(function (el) {
+    el.addEventListener('load', function () {
+        msnry.layout();
+    });
 });
 </script>
 {% endblock %}
