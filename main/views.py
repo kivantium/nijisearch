@@ -24,7 +24,7 @@ def log_info(msg):
     logger.info(msg)
 
 def index(request):
-    images = ImageEntry.objects.filter(collection=True)
+    images = ImageEntry.objects.filter(collection=True).exclude(is_duplicated=True)
     if request.user.is_authenticated:
         user = UserSocialAuth.objects.get(user_id=request.user.id)
         profile, _ = UserProfile.objects.get_or_create(user=user)
@@ -68,6 +68,7 @@ def translate_request(request):
 
 
 def author(request, screen_name):
+    order = request.GET.get('order', default='created_at')
     try:
         author = Author.objects.get(screen_name=screen_name)
     except:
@@ -81,7 +82,7 @@ def author(request, screen_name):
             author.profile_image_url = user.profile_image_url_https.replace('_normal', '')
         author.save()
 
-    images = ImageEntry.objects.filter(author=author, collection=True)
+    images = ImageEntry.objects.filter(author=author, collection=True).exclude(is_duplicated=True)
     if request.user.is_authenticated:
         user = UserSocialAuth.objects.get(user_id=request.user.id)
         profile, _ = UserProfile.objects.get_or_create(user=user)
@@ -91,9 +92,16 @@ def author(request, screen_name):
     else:
         safe = I2VTag.objects.get(name='safe')
         images = images.filter(i2vtags=safe)
+
+    if order == 'like':
+        images = images.order_by('-status__like_count', 'image_number')
+    elif order == 'id':
+        images = images.order_by('-pk', 'image_number')
+    else:
+        images = images.order_by('-status__created_at', 'image_number')
     image_count = images.count()
     return render(request, 'main/author.html', {
-        'author': author,
+        'author': author, 'order': order,
         'image_entry_list': images,
         'image_count': image_count})
 
@@ -200,7 +208,7 @@ def search(request):
         if profile.editor:
             editor = True
 
-    images = ImageEntry.objects.filter(collection=True)
+    images = ImageEntry.objects.filter(collection=True).exclude(is_duplicated=True)
     query = ""
     if i2vtags is not None:
         query += f"&i2vtags={quote(i2vtags)}"
