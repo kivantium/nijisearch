@@ -35,6 +35,7 @@ class Character(models.Model):
 class Author(models.Model):
     author_id = models.BigIntegerField()
     screen_name = models.CharField(max_length=32)
+    profile_image_url = models.URLField(default="")
     is_blocked = models.BooleanField(default=False)
 
     def __str__(self):

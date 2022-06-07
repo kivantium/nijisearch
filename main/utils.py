@@ -61,10 +61,21 @@ def register_status(status_id):
     if author_entry.is_blocked:
         return {"success": False, "message": f"The author {status.author.screen_name} is blocked."}
 
-    # Update screen name
+    # Update author info
     if author_entry.screen_name != status.author.screen_name:
         author_entry.screen_name = status.author.screen_name
         author_entry.save()
+
+    default_profile_url = 'https://abs.twimg.com/sticky/default_profile_images/default_profile.png'
+    if status.author.default_profile_image:
+        if author_entry.profile_image_url != default_profile_url:
+            author_entry.profile_image_url = default_profile_url
+            author_entry.save()
+    else:
+        current_profile_url = status.author.profile_image_url_https.replace('_normal', '')
+        if author_entry.profile_image_url != current_profile_url:
+            author_entry.profile_image_url = current_profile_url
+            author_entry.save()
 
     if 'media' not in status.entities:
         return {"success": False, "message": f"The status {status_id} has no media."}

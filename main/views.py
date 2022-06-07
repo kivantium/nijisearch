@@ -8,7 +8,7 @@ from django.db.models import Count
 from django.contrib.auth.decorators import login_required
 from social_django.models import UserSocialAuth
 
-from .utils import register_status
+from .utils import register_status, get_twitter_api
 from .models import Author, Status, ImageEntry, I2VTag, HashTag, Character, UserProfile
 
 import collections
@@ -72,6 +72,15 @@ def author(request, screen_name):
         author = Author.objects.get(screen_name=screen_name)
     except:
         return HttpResponse('Not found')
+    if author.profile_image_url == "":
+        api = get_twitter_api()
+        user = api.get_user(screen_name=screen_name)
+        if user.default_profile_image:
+            author.profile_image_url = 'https://abs.twimg.com/sticky/default_profile_images/default_profile.png'
+        else:
+            author.profile_image_url = user.profile_image_url_https.replace('_normal', '')
+        author.save()
+
     images = ImageEntry.objects.filter(author=author, collection=True)
     if request.user.is_authenticated:
         user = UserSocialAuth.objects.get(user_id=request.user.id)
