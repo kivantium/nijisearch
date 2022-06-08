@@ -154,6 +154,7 @@ def get_images(request, status_id):
             "characters": characters,
             "confirmed": entry.confirmed,
             "duplicated": entry.is_duplicated,
+            "diff": entry.is_trimmed,
             "parent_id": str(entry.parent.status.status_id) if entry.parent else None,
             "parent_number": entry.parent.image_number if entry.parent else None,
             "is_nsfw": entry.is_nsfw,
@@ -318,6 +319,12 @@ def report(request):
         elif data['report_type'] == 'deleted':
             image.is_deleted = True
             image.collection = False
+        elif data['report_type'] == 'diff':
+            image.is_trimmed = True
+            image.collection = False
+        elif data['report_type'] == 'not_diff':
+            image.is_trimmed = False
+            image.collection = True
         image.save()
         status.contains_illust = any([img.collection for img in ImageEntry.objects.filter(status=status)])
         status.save()

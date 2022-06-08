@@ -13,7 +13,8 @@
     <ul class="list-inline">
       <li class="list-inline-item"><a class="badge bg-primary rounded-pill text-decoration-none" href="{% url 'author' screen_name %}">@{{ screen_name }}</a></li>
       <li class="list-inline-item" v-if="!collection"><span class="badge bg-danger rounded-pill">非収載</span></li>
-      <li class="list-inline-item" v-if="duplicated"><span class="badge bg-secondary rounded-pill" v-bind:href="'/status/'+parent_id+'/?n='+parent_number">再投稿</span> <a v-bind:href="'/status/'+parent_id+'/?n='+parent_number"><small>(初出)</small></a></li>
+      <li class="list-inline-item" v-if="duplicated"><span class="badge bg-secondary rounded-pill">再投稿</span> <a v-bind:href="'/status/'+parent_id+'/?n='+parent_number"><small>(初出)</small></a></li>
+      <li class="list-inline-item" v-if="diff"><span class="badge bg-warning rounded-pill">差分</span></li>
     </ul>
     <ul class="list-inline">
       {% for hashtag in hashtags %}
@@ -46,8 +47,17 @@
   {% endif %}
   {% if editor %}
   <hr>
-  <h2 class="h5 mt-4">キャラクター名の登録</h2>
-  <p class="h6 mt-4">キャラクター名を英語で入力してください（候補に表示されない名前は登録できません）</p>
+  <h2 class="h5 mt-4">キャラクター名の編集</h2>
+  <p class="h6 mt-4">削除するキャラクター名を選んでください</p>
+  <ul class="list-inline mt-3 mb-5">
+    <li class="list-inline-item" v-for="character in characters">
+      <button class="btn btn-secondary btn-sm" v-on:click="deleteName(character.name_en)">
+        <span v-if='character.name_ja == ""'>[[ character.name_en ]]</span>
+        <span v-else>[[ character.name_ja ]]</span>
+      </button>
+    </li>
+  </ul>
+  <p class="h6 mt-4">追加するキャラクター名を英語で入力してください（候補に表示されない名前は登録できません）</p>
   <div class="row gy-2 gx-3 align-items-center">
     <div class="col-auto">
       <input type="text" class="form-control" v-bind="character_name" ref="input" list="candidates" autocomplete="off" @keyup="suggest_character">
@@ -57,7 +67,7 @@
     </div>
   </div>
   <div v-if="similar_characters.length > 0">
-    <p class="h6 mt-4">または候補をクリックしてください</p>
+    <p class="h6 mt-4">または候補から選んでください</p>
     <ul class="list-inline mt-3">
       <li class="list-inline-item" v-for="name in similar_characters">
         <button class="btn btn-outline-secondary btn-sm" v-on:click="registerName(name)">[[ name ]]</button>
@@ -69,16 +79,6 @@
   <datalist id="candidates">
     <option v-for="name in name_candidates" :value="name">
   </datalist>
-  <h2 class="h5 mt-5">キャラクター情報の削除</h2>
-  <p class="h6 mt-4">削除するキャラクター名を選んでください</p>
-  <ul class="list-inline mt-3 mb-5">
-    <li class="list-inline-item" v-for="character in characters">
-      <button class="btn btn-secondary btn-sm" v-on:click="deleteName(character.name_en)">
-        <span v-if='character.name_ja == ""'>[[ character.name_en ]]</span>
-        <span v-else>[[ character.name_ja ]]</span>
-      </button>
-    </li>
-  </ul>
   <h2 class="h5 mt-5">登録情報の修正</h2>
   <form @submit="formSubmit">
     {% csrf_token %}
@@ -102,6 +102,14 @@
       <div class="form-check form-check-inline">
         <input class="form-check-input" type="radio" v-model="report_type" id="radio_deleted" value="deleted">
         <label class="form-check-label" for="radio_deleted">この画像は削除されました</label>
+      </div>
+      <div class="form-check form-check-inline" v-if="!diff">
+        <input class="form-check-input" type="radio" v-model="report_type" id="radio_diff" value="diff">
+        <label class="form-check-label" for="radio_diff">この画像はトリミングまたは差分です</label>
+      </div>
+      <div class="form-check form-check-inline" v-else>
+        <input class="form-check-input" type="radio" v-model="report_type" id="radio_not_diff" value="not_diff">
+        <label class="form-check-label" for="radio_not_diff">この画像はトリミングまたは差分ではありません</label>
       </div>
     </div>
     <button type="submit" id="report" class="btn btn-danger">報告する</button>
@@ -130,6 +138,7 @@
   </ul>
 </div>
 {% endif %}
+</div>
 {% endblock %}
 
 {% block script %}
@@ -157,6 +166,7 @@ const app = Vue.createApp({
       collection: undefined,
       confirmed: undefined,
       duplicated: undefined,
+      diff: undefined,
       parent_id: undefined,
       parent_number: undefined,
       report_type: "not_illust",
@@ -185,6 +195,7 @@ const app = Vue.createApp({
             this.collection = this.image_data[n].collection;
             this.confirmed = this.image_data[n].confirmed;
             this.duplicated = this.image_data[n].duplicated;
+            this.diff = this.image_data[n].diff;
             this.parent_id = this.image_data[n].parent_id;
             this.parent_number = this.image_data[n].parent_number;
             axios.post('{% url 'get_similar_images' %}', {
@@ -207,6 +218,7 @@ const app = Vue.createApp({
       this.collection = this.image_data[n].collection;
       this.confirmed = this.image_data[n].confirmed;
       this.duplicated = this.image_data[n].duplicated;
+      this.diff = this.image_data[n].diff;
       this.parent_id = this.image_data[n].parent_id;
       this.parent_number = this.image_data[n].parent_number;
       const url = new URL(window.location);
@@ -264,6 +276,12 @@ const app = Vue.createApp({
               this.collection = false;
             } else if (this.report_type == "deleted") {
               this.collection = false;
+            } else if (this.report_type == "diff") {
+              this.collection = false;
+              this.diff = true;
+            } else if (this.report_type == "not_diff") {
+              this.collection = true;
+              this.diff = false;
             }
           } else {
             alert("報告に失敗しました");
