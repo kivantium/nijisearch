@@ -198,13 +198,14 @@ def get_similar_images(request):
         indices = res['indices']
         media_urls = res['media_urls']
         for status_id, media_url in zip(indices, media_urls):
-            similar_images.append({"status_url": f"/status/{status_id}",
-                                    "media_url": media_url})
             try:
                 entry = ImageEntry.objects.get(media_url=media_url)
                 names.extend([chara.name_en for chara in entry.characters.all()])
+                similar_images.append({"status_url": f"/status/{status_id}/?n={entry.image_number}",
+                                       "media_url": f"{media_url}:small"})
             except:
-                pass
+                similar_images.append({"status_url": f"/status/{status_id}/",
+                                       "media_url": f"{media_url}:small"})
         count = collections.Counter(names)
         freq_index = [(-count[name], names.index(name), name) for name in set(names)]
         similar_characters = [c[2] for c in sorted(freq_index)]
