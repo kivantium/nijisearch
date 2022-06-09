@@ -76,6 +76,8 @@ def author(request, screen_name):
     order = request.GET.get('order', default='created_at')
     page = request.GET.get('page', default='1')
     page = int(page)
+    show_unlisted = request.GET.get('show_unlisted', default='f')
+    show_unlisted = True if show_unlisted == 't' else False
     try:
         author = Author.objects.get(screen_name=screen_name)
     except:
@@ -89,7 +91,7 @@ def author(request, screen_name):
             author.profile_image_url = user.profile_image_url_https.replace('_normal', '')
         author.save()
 
-    images = ImageEntry.objects.filter(author=author, collection=True).exclude(is_duplicated=True)
+    images = ImageEntry.objects.filter(author=author)
     if request.user.is_authenticated:
         user = UserSocialAuth.objects.get(user_id=request.user.id)
         profile, _ = UserProfile.objects.get_or_create(user=user)
@@ -99,6 +101,9 @@ def author(request, screen_name):
     else:
         safe = I2VTag.objects.get(name='safe')
         images = images.filter(i2vtags=safe)
+
+    if not show_unlisted:
+        images = images.filter(collection=True).exclude(is_duplicated=True)
 
     if order == 'like':
         images = images.order_by('-status__like_count', 'image_number')
@@ -117,7 +122,7 @@ def author(request, screen_name):
     else:
         pages = None
     return render(request, 'main/author.html', {
-        'author': author, 'order': order,
+        'author': author, 'order': order, 'show_unlisted': show_unlisted,
         'pages': pages, 'current_page': page,
         'image_entry_list': images,
         'images_count': images_count})
