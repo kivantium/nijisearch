@@ -22,13 +22,11 @@
       <a href="https://dic.pixiv.net/a/{{ character.name_ja }}">ピクシブ百科事典で調べる</a>
       <a class="ms-2" href="https://dic.nicovideo.jp/a/{{ character.name_ja }}">ニコニコ大百科で調べる</a>
       {% if editor %}<a class="ms-2" data-bs-toggle="collapse" href="#translation_form" aria-expanded="false" aria-controls="translation_form">キャラクター情報を編集する</button>{% endif %}
-      <a class="ms-2" data-bs-toggle="collapse" href="#description" aria-expanded="false" aria-controls="description">検索結果について</a>
     </div>
   </div>
   {% else %}
   <div class="mt-1">
   {% if editor %}<button class="btn btn-link" type="button" data-bs-toggle="collapse" data-bs-target="#translation_form" aria-expanded="false" aria-controls="translation_form">キャラクター情報を編集する</button>{% endif %}
-  <button class="btn btn-link" type="button" data-bs-toggle="collapse" href="#description" aria-expanded="false" aria-controls="description">検索結果について</a>
   </div>
   {% endif %}
   <div class="collapse" id="translation_form">
@@ -50,17 +48,16 @@
     </form>
     <hr>
   </div>
-  <div class="collapse" id="description">
-    <p class="mt-3">画像の左上に表示される赤丸はキャラクター情報が自動推定されたことを示しています</p>
-  </div>
   <div class="mt-3 form-check">
       <input type="checkbox" class="form-check-input" id="show_unconfirmed"{% if not only_confirmed %} checked{%endif %}>
-    <label class="form-check-label" for="show_unconfirmed">キャラクター自動推定の結果も表示する</label>
+    <label class="form-check-label" for="show_unconfirmed">キャラクター自動推定の結果も表示する </label>
+    <a data-bs-toggle="collapse" href="#description" role="button" aria-expanded="false" aria-controls="description">説明を表示</a>
   </div>
-  {% else %}
-  <a class="my-3" data-bs-toggle="collapse" href="#description" role="button" aria-expanded="false" aria-controls="description">検索結果について</a>
   <div class="collapse" id="description">
-    <p class="mt-3">画像の左上に表示される赤丸はまだキャラクター情報が登録されていないことを示しています</p>
+    <ul class="my-3">
+      <li>既知のキャラクター画像との類似度を利用して自動推定されたキャラクターを検索できます</li>
+      <li>キャラクターが自動推定された検索結果には左上に赤丸が表示されます</li>
+    </ul>
   </div>
   {% endif %}
   {% if notfound %}
@@ -68,15 +65,15 @@
   {% else %}
   <select class="form-select mt-3" id="order">
     <option value="created_at"{% if order == "created_at" %} selected{% endif %}>投稿日時が新しい順</option>
-    <option value="like"{% if order == "like" %} selected{% endif %}>いいね数が新しい順</option>
+    <option value="like"{% if order == "like" %} selected{% endif %}>いいね数が多い順</option>
     <option value="id"{% if order == "id" %} selected{% endif %}>データベース登録が新しい順</option>
   </select>
   {% endif %}
   <div class="mt-4 row row-cols-2 row-cols-sm-3 row-cols-md-4 row-cols-lg-6 g-0" id="grid" data-masonry='{"percentPosition": true}'>
     {% for image in images %}
     <div class="col">
-        <a href="{% url 'status' image.status.status_id %}?n={{ image.image_number }}"><img class="w-100 img-thumbnail" src="{{image.media_url}}:small" onerror="this.style.display='none'">
-        {% if not image.confirmed %}<span class="position-absolute top-0 start-0 m-2 p-1 bg-danger border border-light rounded-circle"><span class="visually-hidden">Unconfirmed</span></span>{% endif %}</a>
+        <a href="{% url 'status' image.status.status_id %}?n={{ image.image_number }}"><img class="w-100 img-thumbnail" src="{{image.media_url}}:small" alt="検索結果" onerror="this.style.display='none'">
+        {% if character and not image.confirmed or not character and not image.confirmed and editor %}<span class="position-absolute top-0 start-0 m-2 p-1 bg-danger border border-light rounded-circle"><span class="visually-hidden">Unconfirmed</span></span>{% endif %}</a>
     </div>
     {% endfor %}
   </div>
