@@ -13,7 +13,7 @@
     <div class="w-100"></div>
     <div class="col-auto text-center text-secondary">@{{ author.screen_name }}</div>
   </div>
-  <h2 class="h5 mt-5">登録イラスト {{ image_count }}枚</h2>
+  <h2 class="h5 mt-5">登録イラスト {{ images_count }}枚</h2>
   <select class="form-select mt-3" id="order">
     <option value="created_at"{% if order == "created_at" %} selected{% endif %}>投稿日時が新しい順</option>
     <option value="like"{% if order == "like" %} selected{% endif %}>いいね数が多い順</option>
@@ -27,6 +27,13 @@
       </div>
     {% endfor %}
   </div>
+  <nav aria-label="Page navigation" class="d-flex justify-content-center mt-4">
+    <ul class="pagination">
+      {% for page in pages %}
+      <li class="page-item {% if forloop.counter == current_page %}active{% endif %}"><a class="page-link" href="{{ page }}">{{ forloop.counter }}</a></li>
+      {% endfor %}
+    </ul>
+  </nav>
 </div>
 {% endblock %}
 
@@ -41,6 +48,7 @@ $('#order').change(function() {
     var url = new URL(window.location);
     var search_params = url.searchParams;
     search_params.set('order', $('#order').val());
+    search_params.delete('page');
     var new_url = url.toString();
     window.location.replace(new_url);
 });

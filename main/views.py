@@ -69,10 +69,12 @@ def translate_request(request):
 
 def author(request, screen_name):
     order = request.GET.get('order', default='created_at')
+    page = request.GET.get('page', default='1')
+    page = int(page)
     try:
         author = Author.objects.get(screen_name=screen_name)
     except:
-        return HttpResponse('Not found')
+        return HttpResponse('Author Not found')
     if author.profile_image_url == "":
         api = get_twitter_api()
         user = api.get_user(screen_name=screen_name)
@@ -99,11 +101,21 @@ def author(request, screen_name):
         images = images.order_by('-pk', 'image_number')
     else:
         images = images.order_by('-status__created_at', 'image_number')
-    image_count = images.count()
+    images_count = images.count()
+
+    images_per_page = 60
+    page_size = -(-images_count // images_per_page)  # round up
+    url = request.path + f'?order={order}'
+    if images_count > images_per_page:
+        pages = [f'{url}&page={p+1}' for p in range(page_size)]
+        images = images[images_per_page*(page-1):images_per_page*page]
+    else:
+        pages = None
     return render(request, 'main/author.html', {
         'author': author, 'order': order,
+        'pages': pages, 'current_page': page,
         'image_entry_list': images,
-        'image_count': image_count})
+        'images_count': images_count})
 
 def register(request, status_id):
     res = register_status(status_id)
