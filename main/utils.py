@@ -102,9 +102,11 @@ def register_status(status_id):
 
     status_entry.author = author_entry
     status_entry.text = full_text
+    tag_characters = []
     for tag in hashtags:
         t, _ = HashTag.objects.get_or_create(name=tag)
         status_entry.hashtags.add(t)
+        tag_characters.append(t.characters.all())
     status_entry.retweet_count = status.retweet_count
     status_entry.like_count = status.favorite_count
 
@@ -190,11 +192,15 @@ def register_status(status_id):
                 if count[pk] >= 3:
                     tag = Character.objects.get(pk=pk)
                     img_entry.characters.add(tag)
+
+        # Add characters estimated by hashtag
+        for tag_character in tag_characters:
+            img_entry.characters.add(*tag_character)
         hash_img = str(imagehash.average_hash(img_pil))
         img_entry.imagehash = hash_img
         img_entry.save()
 
-        identical_images = ImageEntry.objects.filter(imagehash=hash_img).order_by('status__created_at')
+        identical_images = ImageEntry.objects.filter(imagehash=hash_img, author=author_entry).exclude(status=status_entry).order_by('status__created_at')
         if identical_images.count() >= 2:
             parent = identical_images[0]
             for image in identical_images[1:]:

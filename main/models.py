@@ -19,11 +19,6 @@ class I2VTag(models.Model):
     def __str__(self):
         return self.name
 
-class HashTag(models.Model):
-    name = models.CharField(max_length=140)
-    def __str__(self):
-        return self.name
-
 class Character(models.Model):
     name_ja = models.TextField()
     name_en = models.TextField()
@@ -31,6 +26,11 @@ class Character(models.Model):
     def __str__(self):
         return f"name_en: {self.name_en}, name_ja: {self.name_ja}"
 
+class HashTag(models.Model):
+    name = models.CharField(max_length=140)
+    characters = models.ManyToManyField(Character)
+    def __str__(self):
+        return self.name
 
 class Author(models.Model):
     author_id = models.BigIntegerField()

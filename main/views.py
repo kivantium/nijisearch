@@ -62,9 +62,14 @@ def user_settings(request):
 def translate_request(request):
     data = json.loads(request.body)
     character = Character.objects.get(pk=data['pk'])
-    character.name_ja = data['name_ja']
+    if 'name_ja' in data:
+        character.name_ja = data['name_ja']
+    elif 'hashtags' in data:
+        for hashtag in data['hashtags'].split(','):
+            hashtag, _ = HashTag.objects.get_or_create(name=data['hashtags'])
+            hashtag.characters.add(character)
     character.save()
-    return JsonResponse({ "success": True, "message": character.name_en + " is succesfully transtaled: " + character.name_ja })
+    return JsonResponse({ "success": True, "message": character.name_en + " is succesfully translated: " + character.name_ja })
 
 
 def author(request, screen_name):
@@ -247,6 +252,7 @@ def search(request):
         status_list = Status.objects.filter(text__contains=keyword)
         images = images.filter(status__in=status_list)
     character_tag = None
+    related_hashtags = None
     if character is not None:
         query += f"&character={quote(character)}"
         try:
@@ -259,6 +265,8 @@ def search(request):
         images = images.filter(characters=character_tag)
         if only_confirmed:
             images = images.filter(confirmed=True)
+        hashtags = HashTag.objects.filter(characters=character_tag)
+        related_hashtags = ','.join([tag.name for tag in hashtags])
 
     if request.user.is_authenticated:
         user = UserSocialAuth.objects.get(user_id=request.user.id)
@@ -294,7 +302,7 @@ def search(request):
     return render(request, 'main/search.html', 
             {'images': images, 'images_count': images_count, 'order': order,
              'only_confirmed': only_confirmed, 'editor': editor,
-             'i2vtags': i2vtags, 'character': character_tag,
+             'i2vtags': i2vtags, 'character': character_tag, 'related_hashtags': related_hashtags,
              'prev_page': prev_page, 'next_page': next_page})
 
 def unlisted(request):
