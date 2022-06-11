@@ -6,12 +6,14 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 from django.db.models import Count
 from django.contrib.auth.decorators import login_required
+from django.utils.timezone import make_aware
 from social_django.models import UserSocialAuth
 
 from .utils import register_status, get_twitter_api
 from .models import Author, Status, ImageEntry, I2VTag, HashTag, Character, UserProfile
 
 import collections
+import datetime
 import requests
 import threading
 import itertools
@@ -24,21 +26,54 @@ def log_info(msg):
     logger.info(msg)
 
 def index(request):
-    images = ImageEntry.objects.filter(collection=True).exclude(is_duplicated=True)
+    images = ImageEntry.objects.filter(collection=True)
+    now = make_aware(datetime.datetime.now())
+    td = datetime.timedelta(hours=24)
+    start = now - td
+    ranking_images = ImageEntry.objects.filter(status__created_at__range=(start, now)).filter(collection=True)
     if request.user.is_authenticated:
         user = UserSocialAuth.objects.get(user_id=request.user.id)
         profile, _ = UserProfile.objects.get_or_create(user=user)
         if not profile.show_nsfw:
-            safe = I2VTag.objects.get(name='safe')
-            images = images.filter(i2vtags=safe)
+            images = images.filter(is_nsfw=False)
+            ranking_images = ranking_images.filter(is_nsfw=False)
     else:
-        safe = I2VTag.objects.get(name='safe')
-        images = images.filter(i2vtags=safe)
-    images = images.order_by('-pk')[:36]
-    return render(request, 'main/index.html', {'images': images})
+        images = images.filter(is_nsfw=False)
+        ranking_images = ranking_images.filter(is_nsfw=False)
+    images = images.order_by('-pk')[:24]
+    ranking_images = ranking_images.order_by('-status__like_count')[:12]
+
+    return render(request, 'main/index.html', {'images': images, 'ranking_images': ranking_images})
 
 def about(request):
     return render(request, 'main/about.html')
+
+def ranking(request):
+    page = request.GET.get('page', default='1')
+    page = int(page)
+    now = make_aware(datetime.datetime.now())
+    td = datetime.timedelta(hours=24)
+    start = now - td
+    images = ImageEntry.objects.filter(status__created_at__range=(start, now)).filter(collection=True)
+    if request.user.is_authenticated:
+        user = UserSocialAuth.objects.get(user_id=request.user.id)
+        profile, _ = UserProfile.objects.get_or_create(user=user)
+        if not profile.show_nsfw:
+            images = images.filter(is_nsfw=False)
+    else:
+        images = images.filter(is_nsfw=False)
+    images = images.order_by('-status__like_count')
+
+    images_per_page = 120
+    images_count = images.count()
+    page_size = -(-images_count // images_per_page)  # round up
+    url = request.path
+    if images_count > images_per_page:
+        pages = [f'{url}?page={p+1}' for p in range(page_size)]
+        images = images[images_per_page*(page-1):images_per_page*page]
+    else:
+        pages = None
+    return render(request, 'main/ranking.html', {'images': images, 'pages': pages, 'current_page': page})
 
 def translate(request):
     page = int(request.GET.get('page', default='0'))

@@ -109,6 +109,7 @@ def register_status(status_id):
         tag_characters.append(t.characters.all())
     status_entry.retweet_count = status.retweet_count
     status_entry.like_count = status.favorite_count
+    status_entry.save()
 
     image_hashes = []
     for num, media in enumerate(status.extended_entities['media']):

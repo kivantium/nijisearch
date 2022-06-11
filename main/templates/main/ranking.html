@@ -1,0 +1,47 @@
+{% extends 'main/base.html' %}
+
+{% block page_title%}デイリーランキング{% endblock %}
+
+{% block content %}
+<div class="container">
+  <h2 class="h4 mt-5">デイリーランキング</h2>
+  <p>24時間以内に投稿されたイラストをいいね数が多い順に並べています。いいね数は画像取得時の値を利用しているため最新の値を反映していない場合があります。</p>
+
+  <hr>
+  <div class="mt-4 row row-cols-2 row-cols-sm-3 row-cols-md-4 row-cols-lg-6 g-0" id="grid" data-masonry='{"percentPosition": true}'>
+    {% for image in images %}
+      <div class="col mb-0">
+          <a href="{% url 'status' image.status.status_id %}?n={{image.image_number}}"><img class="w-100 img-thumbnail" src="{{image.media_url}}:small" alt="イラスト" onerror="this.style.display='none'"></a>
+      </div>
+    {% endfor %}
+  </div>
+  <nav aria-label="Page navigation" class="d-flex justify-content-center mt-4">
+    <ul class="pagination">
+      {% for page in pages %}
+      <li class="page-item {% if forloop.counter == current_page %}active{% endif %}"><a class="page-link" href="{{ page }}">{{ forloop.counter }}</a></li>
+      {% endfor %}
+    </ul>
+  </nav>
+</div>
+{% endblock %}
+
+{% block script %}
+<script
+  src="https://code.jquery.com/jquery-3.6.0.slim.min.js"
+  integrity="sha256-u7e5khyithlIdTpu22PHhENmPcRdFiHRjhAuHcs05RI="
+  crossorigin="anonymous"></script>
+<script src="https://unpkg.com/masonry-layout@4/dist/masonry.pkgd.min.js"></script>
+<script>
+var $grid = document.querySelector('#grid');
+var msnry = new Masonry($grid, {
+    itemSelector: '.col',
+    percentPosition: true
+});
+var $images = $grid.querySelectorAll('img');
+$images.forEach(function (el) {
+    el.addEventListener('load', function () {
+        msnry.layout();
+    });
+});
+</script>
+{% endblock %}

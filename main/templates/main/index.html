@@ -20,7 +20,7 @@
         </div>
         <div class="form-check form-check-inline">
           <input class="form-check-input" type="radio" name="search_type" id="checkbox_tag" value="tag">
-          <label class="form-check-label" for="checkbox_tag">タグ検索</label>
+          <label class="form-check-label" for="checkbox_tag">I2Vタグ検索</label>
         </div>
         <div class="form-check form-check-inline">
           <input class="form-check-input" type="radio" name="search_type" id="checkbox_id" value="status_id">
@@ -41,10 +41,13 @@
       <dt>Tweet ID検索</dt><dd>Tweet IDで検索します。IDは各ツイートのURLから分かります ( <code>https://twitter.com/username/status/XXXXXX?YYYYYYY</code> の <code>XXXXXX</code> ) このフォーマットのURLを直接入力することも可能です。登録されていない画像ツイートを検索すると新しく登録されます。</dd>
     </dl>
   </div>
-
+  <h2 class="h5 mt-4">更新情報</h2>
+  <ul>
+      <li>デイリーランキングを追加しました (6/12)</li>
+  </ul>
   <h2 class="h5 mt-5">新しく登録されたイラスト</h2>
   <hr>
-  <div class="mt-4 row row-cols-2 row-cols-sm-3 row-cols-md-4 row-cols-lg-6 g-0" id="grid" data-masonry='{"percentPosition": true}'>
+  <div class="mt-4 row row-cols-2 row-cols-sm-3 row-cols-md-4 row-cols-lg-6 g-0 grid" data-masonry='{"percentPosition": true}'>
     {% for image in images %}
       <div class="col mb-0">
           <a href="{% url 'status' image.status.status_id %}?n={{image.image_number}}"><img class="w-100 img-thumbnail" src="{{image.media_url}}:small" alt="イラスト" onerror="this.style.display='none'"></a>
@@ -53,6 +56,17 @@
   </div>
   <div class="mt-3 pb-5">
     <a class="float-end" href="{% url 'search' %}?order=id">全ての画像を見る</a>
+  </div>
+  <h2 class="h5 mt-5">本日の人気イラスト</h2>
+  <div class="mt-4 row row-cols-2 row-cols-sm-3 row-cols-md-4 row-cols-lg-6 g-0 grid" data-masonry='{"percentPosition": true}'>
+    {% for image in ranking_images %}
+      <div class="col mb-0">
+          <a href="{% url 'status' image.status.status_id %}?n={{image.image_number}}"><img class="w-100 img-thumbnail" src="{{image.media_url}}:small" alt="イラスト" onerror="this.style.display='none'"></a>
+      </div>
+    {% endfor %}
+  </div>
+  <div class="mt-3 pb-5">
+    <a class="float-end" href="{% url 'ranking' %}">デイリーランキングを見る</a>
   </div>
 </div>
 {% endblock %}
@@ -80,7 +94,7 @@ $('#search').submit(function(){
     return false;
 })
 
-var $grid = document.querySelector('#grid');
+var $grid = document.querySelector('.grid');
 var msnry = new Masonry($grid, {
     itemSelector: '.col',
     percentPosition: true
