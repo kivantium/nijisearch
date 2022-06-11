@@ -31,19 +31,23 @@ def index(request):
     td = datetime.timedelta(hours=24)
     start = now - td
     ranking_images = ImageEntry.objects.filter(status__created_at__range=(start, now)).filter(collection=True, image_number=0)
+    editor = False
     if request.user.is_authenticated:
         user = UserSocialAuth.objects.get(user_id=request.user.id)
         profile, _ = UserProfile.objects.get_or_create(user=user)
         if not profile.show_nsfw:
             images = images.filter(is_nsfw=False)
             ranking_images = ranking_images.filter(is_nsfw=False)
+        if profile.editor:
+            editor = True
     else:
         images = images.filter(is_nsfw=False)
         ranking_images = ranking_images.filter(is_nsfw=False)
     images = images.order_by('-pk')[:24]
     ranking_images = ranking_images.order_by('-status__like_count')[:12]
 
-    return render(request, 'main/index.html', {'images': images, 'ranking_images': ranking_images})
+    return render(request, 'main/index.html',
+            {'images': images, 'ranking_images': ranking_images, 'editor': editor})
 
 def about(request):
     return render(request, 'main/about.html')
@@ -354,6 +358,7 @@ def unlisted(request):
     page = request.GET.get('page', default='1')
     page = int(page)
     images = ImageEntry.objects.filter(collection=False)
+    images = images.exclude(is_duplicated=True).exclude(is_trimmed=True)
     images_per_page = 120
     images_count = images.count()
     last_page = -(-images_count // images_per_page)  # round up

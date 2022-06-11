@@ -46,6 +46,13 @@
       <li>イラスト詳細画面で画像をクリックするとツイートに飛べるようにしました (6/12)</li>
       <li>デイリーランキングを追加しました (6/12)</li>
   </ul>
+  {% if editor %}
+  <h2 class="h5 mt-5">編集者向けメニュー</h2>
+  <ul>
+      <li><a href="{% url 'translate' %}">キャラクター名翻訳</a></li>
+      <li><a href="{% url 'unlisted' %}">非収載画像一覧</a></li>
+  </ul>
+  {% endif %}
   <h2 class="h5 mt-5">新しく登録されたイラスト</h2>
   <hr>
   <div class="mt-4 row row-cols-2 row-cols-sm-3 row-cols-md-4 row-cols-lg-6 g-0" id="grid" data-masonry='{"percentPosition": true}'>
