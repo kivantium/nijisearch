@@ -7,7 +7,7 @@
   <h2 class="h5 mt-5">イラスト詳細</h2>
   <hr>
   {% if not registered %}
-    <p>現在詳細情報を取得中です。このページは3秒後に自動的に更新されます。</p>
+    <p>現在詳細情報を取得中です。このページは5秒後に自動的に更新されます。</p>
   {% else %}
   <div id="app" class="container">
     <ul class="list-inline">
@@ -40,9 +40,15 @@
       </li>
     </ul>
     <div class="row justify-content-center">
-      <div class="col-1 my-auto"><button class="btn btn-outline-secondary" v-if="image_number > 0" v-on:click="updateImage(image_number-1)"><i class="bi bi-arrow-left"></i></button></div>
-      <div class="col-8 col-lg-4"><img class="img-fluid" v-bind:src="media_url" alt="イラスト"></div>
-      <div class="col-1 my-auto"><button class="btn btn-outline-secondary" v-if="image_number < image_data.length-1" v-on:click="updateImage(image_number+1)"><i class="bi bi-arrow-right"></i></button></div>
+      <div class="col-8 col-lg-4">
+          <div class="position-relative">
+              <a href="https://twitter.com/{{ screen_name }}/status/{{ status_id }}/">
+                 <img class="img-fluid my-3" v-bind:src="media_url" alt="イラスト">
+              </a>
+              <div class="position-absolute top-50 end-100"><button class="btn btn-outline-secondary me-4" v-if="image_number > 0" v-on:click="updateImage(image_number-1)"><i class="bi bi-arrow-left"></i></button></div>
+              <div class="position-absolute top-50 start-100"><button class="btn btn-outline-secondary ms-4" v-if="image_number < image_data.length-1" v-on:click="updateImage(image_number+1)"><i class="bi bi-arrow-right"></i></button></div>
+          </div>
+        </div>
     </div>
   {% endif %}
   {% if editor %}
@@ -112,7 +118,7 @@
         <label class="form-check-label" for="radio_not_diff">この画像はトリミングまたは差分ではありません</label>
       </div>
     </div>
-    <button type="submit" id="report" class="btn btn-danger">報告する</button>
+    <button type="submit" id="report" class="btn btn-danger mt-3">報告する</button>
   </form>
   {% endif %}
   <hr>
@@ -266,23 +272,7 @@ const app = Vue.createApp({
         }).then(res => {
           if(res.data.success) {
             alert("報告が完了しました");
-            if(this.report_type == "safe") {
-                this.is_nsfw = false;
-            } else if (this.report_type == "not_safe") {
-                this.is_nsfw = true;
-            } else if (this.report_type == "is_illust") {
-              this.collection = true;
-            } else if (this.report_type == "not_illust") {
-              this.collection = false;
-            } else if (this.report_type == "deleted") {
-              this.collection = false;
-            } else if (this.report_type == "diff") {
-              this.collection = false;
-              this.diff = true;
-            } else if (this.report_type == "not_diff") {
-              this.collection = true;
-              this.diff = false;
-            }
+            this.getInfo();
           } else {
             alert("報告に失敗しました");
       }
@@ -313,7 +303,7 @@ const vm = app.mount('#app');
 </script>
 {% else %}
 <script>
-setTimeout(function () { location.reload(); }, 3000);
+setTimeout(function () { location.reload(); }, 5000);
 </script>
 {% endif %}  
 {% endblock %}
