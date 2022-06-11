@@ -51,7 +51,7 @@
   <div class="mt-4 row row-cols-2 row-cols-sm-3 row-cols-md-4 row-cols-lg-6 g-0" id="grid" data-masonry='{"percentPosition": true}'>
     {% for image in images %}
       <div class="col mb-0">
-          <a href="{% url 'status' image.status.status_id %}?n={{image.image_number}}"><img class="w-100 img-thumbnail" src="{{image.media_url}}:small" alt="イラスト" onerror="this.style.display='none'"></a>
+          <a href="{% url 'status' image.status.status_id %}?n={{image.image_number}}"><img class="w-100 img-thumbnail" src="{{image.media_url}}:small" alt="イラスト" onerror="this.style.display='none'"{% if image.width != 0 %} width="{{ image.width }}" height="{{ image.height }}"{% endif %}></a>
       </div>
     {% endfor %}
   </div>
@@ -62,7 +62,7 @@
   <div class="mt-4 row row-cols-2 row-cols-sm-3 row-cols-md-4 row-cols-lg-6 g-0" id="grid2" data-masonry='{"percentPosition": true}'>
     {% for image in ranking_images %}
       <div class="col mb-0">
-          <a href="{% url 'status' image.status.status_id %}?n={{image.image_number}}"><img class="w-100 img-thumbnail" src="{{image.media_url}}:small" alt="イラスト" onerror="this.style.display='none'"></a>
+          <a href="{% url 'status' image.status.status_id %}?n={{image.image_number}}"><img class="w-100 img-thumbnail" src="{{image.media_url}}:small" alt="イラスト" onerror="this.style.display='none'"{% if image.width != 0 %} width="{{ image.width }}" height="{{ image.height }}"{% endif %}></a>
       </div>
     {% endfor %}
   </div>

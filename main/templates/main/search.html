@@ -92,7 +92,7 @@
   <div class="mt-4 row row-cols-2 row-cols-sm-3 row-cols-md-4 row-cols-lg-6 g-0" id="grid" data-masonry='{"percentPosition": true}'>
     {% for image in images %}
     <div class="col">
-        <a href="{% url 'status' image.status.status_id %}?n={{ image.image_number }}"><img class="w-100 img-thumbnail" src="{{image.media_url}}:small" alt="検索結果" onerror="this.style.display='none'">
+        <a href="{% url 'status' image.status.status_id %}?n={{ image.image_number }}"><img class="w-100 img-thumbnail" src="{{image.media_url}}:small" alt="検索結果" onerror="this.style.display='none'"{% if image.width != 0 %} width="{{ image.width }}" height="{{ image.height }}"{% endif %}>
         {% if character and not image.confirmed or not character and not image.confirmed and editor %}<span class="position-absolute top-0 start-0 m-2 p-1 bg-danger border border-light rounded-circle"><span class="visually-hidden">Unconfirmed</span></span>{% endif %}</a>
     </div>
     {% endfor %}

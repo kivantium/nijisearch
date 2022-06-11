@@ -7,7 +7,6 @@ from ...models import ImageEntry, Status
 import datetime
 import tweepy
 import time
-import pytz
 import requests
 
 def get_twitter_api():
