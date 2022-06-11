@@ -30,7 +30,7 @@ def index(request):
     now = make_aware(datetime.datetime.now())
     td = datetime.timedelta(hours=24)
     start = now - td
-    ranking_images = ImageEntry.objects.filter(status__created_at__range=(start, now)).filter(collection=True)
+    ranking_images = ImageEntry.objects.filter(status__created_at__range=(start, now)).filter(collection=True, image_number=0)
     if request.user.is_authenticated:
         user = UserSocialAuth.objects.get(user_id=request.user.id)
         profile, _ = UserProfile.objects.get_or_create(user=user)
@@ -54,7 +54,7 @@ def ranking(request):
     now = make_aware(datetime.datetime.now())
     td = datetime.timedelta(hours=24)
     start = now - td
-    images = ImageEntry.objects.filter(status__created_at__range=(start, now)).filter(collection=True)
+    images = ImageEntry.objects.filter(status__created_at__range=(start, now)).filter(collection=True, image_number=0)
     if request.user.is_authenticated:
         user = UserSocialAuth.objects.get(user_id=request.user.id)
         profile, _ = UserProfile.objects.get_or_create(user=user)
@@ -432,7 +432,10 @@ def delete_character(request):
     status = Status.objects.get(status_id=int(data['status_id']))
     image_entry = ImageEntry.objects.get(status=status, image_number=data['image_number'])
     image_entry.characters.remove(character)
-    image_entry.confirmed = True
+    if image_entry.characters.count() == 0:
+        image_entry.confirmed = False
+    else:
+        image_entry.confirmed = True
     image_entry.save()
     user = UserSocialAuth.objects.get(user_id=request.user.id)
     log_info(f"Delete {data['name']} from status {data['status_id']} (n={data['image_number']}) by {user.access_token['screen_name']}")

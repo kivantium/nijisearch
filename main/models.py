@@ -74,6 +74,8 @@ class ImageEntry(models.Model):
     i2vtags = models.ManyToManyField(I2VTag)
     characters = models.ManyToManyField(Character, related_name='characters')
     similar_characters = models.ManyToManyField(Character, related_name='similars')
+    width = models.IntegerField(default=0)
+    height = models.IntegerField(default=0)
     thumbnail = models.FilePathField()
 
     def __str__(self):

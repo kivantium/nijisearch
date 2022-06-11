@@ -80,10 +80,6 @@ def register_status(status_id):
     if 'media' not in status.entities:
         return {"success": False, "message": f"The status {status_id} has no media."}
 
-    for num, media in enumerate(status.extended_entities['media']):
-        if media['type'] == 'video':
-            return {"success": False, "message": f"The status {status_id} contains video."}
-
     status_entry, created = Status.objects.get_or_create(author=author_entry, 
                                                          status_id=status_id,
                                                          created_at=status.created_at)
@@ -116,8 +112,10 @@ def register_status(status_id):
         media_url = media['media_url_https']
         filename = os.path.basename(urlparse(media_url).path)
         filename = os.path.join('/tmp', filename)
-        urllib.request.urlretrieve(media_url, filename)
+        urllib.request.urlretrieve(media_url + ':small', filename)
         img_pil = Image.open(filename).convert('RGB')
+        width = img_pil.width
+        height = img_pil.height
         img = crop_and_resize(img_pil, 224)
 
         img_np = np.asarray(img).astype(np.float32)/255.0
@@ -133,15 +131,23 @@ def register_status(status_id):
         probs = softmax(ort_outs[0])
         is_illust = True if probs[1] > 0.3 else False
 
-        # Run Illustration2Vec
-        i2vtags = illust2vec.estimate_plausible_tags([img_pil], threshold=0.4)
+        if status.favorite_count < 100:
+            is_illust = False
+
+        if media['type'] == 'video' or media['type'] == 'animated_gif':
+            is_illust = False
 
         img_entry = ImageEntry.objects.create(
-                    author = author_entry,
-                    status = status_entry,
+                    author=author_entry,
+                    status=status_entry,
                     image_number=num,
                     media_url=media_url,
+                    width=width,
+                    height=height,
                     collection=is_illust)
+
+        # Run Illustration2Vec
+        i2vtags = illust2vec.estimate_plausible_tags([img_pil], threshold=0.4)
 
         for category, TYPE in [('character', 'CH'), ('copyright', 'CO'), ('general', 'GE')]:
             for tag in i2vtags[0][category]:
