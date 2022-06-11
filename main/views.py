@@ -116,6 +116,10 @@ def author(request, screen_name):
     images_per_page = 60
     page_size = -(-images_count // images_per_page)  # round up
     url = request.path + f'?order={order}'
+    if show_unlisted:
+     url = request.path + f'?order={order}'
+    if show_unlisted:
+        url += '&show_unlisted=t'
     if images_count > images_per_page:
         pages = [f'{url}&page={p+1}' for p in range(page_size)]
         images = images[images_per_page*(page-1):images_per_page*page]

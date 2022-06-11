@@ -110,6 +110,7 @@ def register_status(status_id):
     status_entry.retweet_count = status.retweet_count
     status_entry.like_count = status.favorite_count
 
+    image_hashes = []
     for num, media in enumerate(status.extended_entities['media']):
         media_url = media['media_url_https']
         filename = os.path.basename(urlparse(media_url).path)
@@ -163,8 +164,8 @@ def register_status(status_id):
         if not has_girl:
             img_entry.collection = False
 
-        # Reject monochrome image or photo
-        names = ['monochrome', 'photo']
+        # Reject undesired images
+        names = ['chibi', 'comic', 'monochrome', 'photo']
         for tag_name in names:
             t, _ = I2VTag.objects.get_or_create(name=tag_name, tag_type='GE')
             if t in img_entry.i2vtags.all():
@@ -196,14 +197,20 @@ def register_status(status_id):
         # Add characters estimated by hashtag
         for tag_character in tag_characters:
             img_entry.characters.add(*tag_character)
-        hash_img = str(imagehash.average_hash(img_pil))
-        img_entry.imagehash = hash_img
-        img_entry.save()
 
-        identical_images = ImageEntry.objects.filter(imagehash=hash_img, author=author_entry).exclude(status=status_entry).order_by('status__created_at')
+        # Calculate image hash
+        hash_img = imagehash.average_hash(img_pil)
+        img_entry.imagehash = str(hash_img)
+        img_entry.save()
+        image_hashes.append(hash_img)
+
+        # Detect identical images
+        identical_images = ImageEntry.objects.filter(imagehash=hash_img, author=author_entry).order_by('status__created_at')
         if identical_images.count() >= 2:
             parent = identical_images[0]
             for image in identical_images[1:]:
+                if image.status == parent.status:
+                    continue
                 image.is_duplicated = True
                 image.parent = parent
                 image.save()
@@ -213,10 +220,14 @@ def register_status(status_id):
             parent.is_duplicated = False
             parent.save()
 
-    entries = ImageEntry.objects.filter(status=status_entry)
-    status_entry.contains_illust = any([img.collection for img in entries])
-    if status_entry.contains_illust:
-        img_entry = entries.filter(collection=True).order_by('image_number')[0]
-        status_entry.thumbnail_url = img_entry.media_url
-    status_entry.save()
+    # Detect diff and trimming
+    entries = ImageEntry.objects.filter(status=status_entry).order_by('image_number')
+    if entries.count() >= 2:
+        hash_org = image_hashes[0]
+        for i, entry in enumerate(entries[1:]):
+            if image_hashes[i+1] - hash_org < 20:
+                entry.is_trimmed = True
+                entry.collection = False
+                entry.save()
+
     return {"success": True, "message": f"The status {status_id} is registered successfully."}
