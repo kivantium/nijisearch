@@ -42,7 +42,7 @@
     <div class="row justify-content-center">
       <div class="col-8 col-lg-4">
           <div class="position-relative">
-              <a href="https://twitter.com/{{ screen_name }}/status/{{ status_id }}/">
+              <a href="https://twitter.com/{{ screen_name }}/status/{{ status_id }}/" target="_blank" rel="noopener noreferrer">
                  <img class="img-fluid my-3" v-bind:src="media_url" alt="イラスト">
               </a>
               <div class="position-absolute top-50 end-100"><button class="btn btn-outline-secondary me-4" v-if="image_number > 0" v-on:click="updateImage(image_number-1)"><i class="bi bi-arrow-left"></i></button></div>
