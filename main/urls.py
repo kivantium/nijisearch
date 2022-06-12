@@ -10,6 +10,7 @@ urlpatterns = [
     path('settings/', views.user_settings, name='settings'),
     path('register/<int:status_id>/', views.register, name='register'),
     path('author/<str:screen_name>/', views.author, name='author'),
+    path('update_author/', views.update_author, name='update_author'),
     path('search/', views.search, name='search'),
     path('unlisted/', views.unlisted, name='unlisted'),
     path('translate/', views.translate, name='translate'),

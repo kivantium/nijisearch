@@ -16,6 +16,7 @@
         <a href="{% url 'index' %}" class="navbar-brand fw-bold">にじさーち改</a>
           <a class="navbar-brand" href="#" role="button" id="nav_menu" data-bs-toggle="dropdown" aria-expanded="false"><span class="navbar-toggler-icon"></span></a>
           <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="nav_menu">
+            {% block menu %}{% endblock %}
             <li><a class="dropdown-item" href="{% url 'about' %}">このサイトについて</a></li>
             {% if request.user.is_authenticated %}
             <li><a class="dropdown-item" href="{% url 'settings' %}">ユーザー設定</a></li>

@@ -37,6 +37,7 @@ class Author(models.Model):
     screen_name = models.CharField(max_length=32)
     profile_image_url = models.URLField(default="")
     is_blocked = models.BooleanField(default=False)
+    is_protected = models.BooleanField(default=False)
 
     def __str__(self):
         return f"@{self.screen_name} ({self.author_id})"

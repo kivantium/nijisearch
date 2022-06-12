@@ -110,6 +110,39 @@ def translate_request(request):
     character.save()
     return JsonResponse({ "success": True, "message": character.name_en + " is succesfully translated: " + character.name_ja })
 
+def update_author_info(screen_name, author=None):
+    api = get_twitter_api()
+    try:
+        user = api.get_user(screen_name=screen_name)
+    except:
+        return None
+    if author is None:
+        author, _ = Author.objects.get_or_create(author_id=user.id)
+        author.screen_name = screen_name
+    if user.default_profile_image:
+        author.profile_image_url = 'https://abs.twimg.com/sticky/default_profile_images/default_profile.png'
+    else:
+        author.profile_image_url = user.profile_image_url_https.replace('_normal', '')
+    if 'にじさーち削除依頼' in user.description:
+        author.is_blocked = True
+        images = ImageEntry.objects.filter(author=author)
+        for image in images:
+            image.collection = False
+            image.save()
+    author.is_protected = user.protected
+    author.save()
+    return author
+
+@require_POST
+def update_author(request):
+    data = json.loads(request.body)
+    screen_name = data['screen_name']
+    author, _ = Author.objects.get_or_create(screen_name=screen_name)
+    res = update_author_info(screen_name)
+    if res is not None:
+        return JsonResponse({"success": True})
+    else:
+        return JsonResponse({"success": False, "reason": "User not found"})
 
 def author(request, screen_name):
     order = request.GET.get('order', default='created_at')
@@ -119,17 +152,16 @@ def author(request, screen_name):
     show_unlisted = True if show_unlisted == 't' else False
     try:
         author = Author.objects.get(screen_name=screen_name)
+        if author.profile_image_url == "":
+            update_author_info(screen_name, author)
     except:
-        return HttpResponse('Author Not found')
-    if author.profile_image_url == "":
-        api = get_twitter_api()
-        user = api.get_user(screen_name=screen_name)
-        if user.default_profile_image:
-            author.profile_image_url = 'https://abs.twimg.com/sticky/default_profile_images/default_profile.png'
-        else:
-            author.profile_image_url = user.profile_image_url_https.replace('_normal', '')
-        author.save()
-
+        author = update_author_info(screen_name)
+        if author is None:
+            return render(request, 'main/author.html', { 'notFound': True, 'screen_name': screen_name })
+    if author.is_blocked:
+        return render(request, 'main/author.html', { 'author': author, 'blocked': True })
+    if author.is_protected:
+        return render(request, 'main/author.html', { 'author': author, 'protected': True })
     images = ImageEntry.objects.filter(author=author)
     if request.user.is_authenticated:
         user = UserSocialAuth.objects.get(user_id=request.user.id)
@@ -184,6 +216,11 @@ def status(request, status_id):
         t = threading.Thread(target=register_status, args=(status_id, ))
         t.start()
         return render(request, 'main/status.html', {'registered': False, 'status_id': status_id})
+
+    if status.author.is_blocked:
+        return render(request, 'main/status.html', {'blocked': True})
+    if status.author.is_protected:
+        return render(request, 'main/status.html', {'protected': True})
 
     editor = False
     if request.user.is_authenticated:
@@ -357,7 +394,7 @@ def search(request):
 def unlisted(request):
     page = request.GET.get('page', default='1')
     page = int(page)
-    images = ImageEntry.objects.filter(collection=False)
+    images = ImageEntry.objects.filter(collection=False).exclude(author__is_blocked=True)
     images = images.exclude(is_duplicated=True).exclude(is_trimmed=True)
     images_per_page = 120
     images_count = images.count()

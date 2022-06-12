@@ -4,6 +4,9 @@
 
 {% block content %}
 <div class="container">
+ {% if notFound %}
+ <p class="mt-4"><a href="https://twitter.com/{{ screen_name }}">@{{ screen_name}}</a> の情報を取得できませんでした。アカウントが存在しない可能性があります。</p>
+ {% else %}
   <div class="mt-3 row justify-content-center">
     <div class="col-3 col-lg-2">
       <a href="https://twitter.com/{{ author.screen_name }}">
@@ -13,6 +16,12 @@
     <div class="w-100"></div>
     <div class="col-auto text-center text-secondary">@{{ author.screen_name }}</div>
   </div>
+  {% if blocked %}
+  <hr class="my-3">
+  <p>削除依頼があったため、このユーザーの画像は表示できません<p>
+  {% elif protected %}
+  <p>このアカウントは非公開アカウントです<p>
+  {% else %}
   <h2 class="h5 mt-5">登録イラスト {{ images_count }}枚</h2>
   <div class="mt-3 form-check">
       <input type="checkbox" class="form-check-input" id="show_unlisted"{% if show_unlisted %} checked{%endif %}>
@@ -43,6 +52,8 @@
       {% endfor %}
     </ul>
   </nav>
+  {% endif %}
+  {% endif %}
 </div>
 {% endblock %}
 
@@ -52,7 +63,25 @@
   integrity="sha256-u7e5khyithlIdTpu22PHhENmPcRdFiHRjhAuHcs05RI="
   crossorigin="anonymous"></script>
 <script src="https://unpkg.com/masonry-layout@4/dist/masonry.pkgd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
 <script>
+{% if not notFound and not blocked and not protected %}
+axios.defaults.xsrfCookieName = 'csrftoken'
+axios.defaults.xsrfHeaderName = "X-CSRFTOKEN"
+$(document).ready(function() {
+    $("#update").click(function(){
+        axios.post('{% url 'update_author' %}', {
+            screen_name: "{{ author.screen_name }}",
+        }).then(res => {
+            if (res.data.success) {
+                alert("情報を更新しました");
+            } else {
+                alert("情報の更新に失敗しました");
+            }
+            document.location.reload()
+        });
+    });
+});
 $('#show_unlisted').change(function() {
     var url = new URL(window.location);
     var search_params = url.searchParams;
@@ -83,5 +112,7 @@ $images.forEach(function (el) {
         msnry.layout();
     });
 });
+{% endif %}
 </script>
 {% endblock %}
+{% block menu %}<li><a class="dropdown-item" href="{% url 'author' author.screen_name %}" id="update">情報を更新</a></li>{% endblock %}
