@@ -26,7 +26,7 @@ def log_info(msg):
     logger.info(msg)
 
 def index(request):
-    images = ImageEntry.objects.filter(collection=True)
+    images = ImageEntry.objects.filter(collection=True, image_number=0)
     now = make_aware(datetime.datetime.now())
     td = datetime.timedelta(hours=24)
     start = now - td
@@ -77,7 +77,14 @@ def ranking(request):
         images = images[images_per_page*(page-1):images_per_page*page]
     else:
         pages = None
-    return render(request, 'main/ranking.html', {'images': images, 'pages': pages, 'current_page': page})
+
+    editor = False
+    if request.user.is_authenticated:
+        user = UserSocialAuth.objects.get(user_id=request.user.id)
+        profile = UserProfile.objects.get(user=user)
+        if profile.editor:
+            editor = True
+    return render(request, 'main/ranking.html', {'images': images, 'pages': pages, 'current_page': page, 'editor': editor})
 
 def translate(request):
     page = int(request.GET.get('page', default='0'))
@@ -394,19 +401,25 @@ def search(request):
 def unlisted(request):
     page = request.GET.get('page', default='1')
     page = int(page)
+    now = make_aware(datetime.datetime.now())
+    td = datetime.timedelta(hours=72)
+    start = now - td
     images = ImageEntry.objects.filter(collection=False).exclude(author__is_blocked=True)
     images = images.exclude(is_duplicated=True).exclude(is_trimmed=True)
+    images = images.filter(status__registered_at__range=(start, now)).order_by('-status__like_count')
+    images = images.order_by('-status__like_count')
+
     images_per_page = 120
     images_count = images.count()
-    last_page = -(-images_count // images_per_page)  # round up
-    prev_page = request.path + f'?page={page-1}' if page != 1 else None
-    next_page = request.path + f'?page={page+1}' if page != last_page else None
+    page_size = -(-images_count // images_per_page)  # round up
+    url = request.path
+    if images_count > images_per_page:
+        pages = [f'{url}?page={p+1}' for p in range(page_size)]
+        images = images[images_per_page*(page-1):images_per_page*page]
+    else:
+        pages = None
 
-    images = images.order_by('-pk')[images_per_page*(page-1):images_per_page*page]
-
-    return render(request, 'main/search.html', 
-            {'images': images, 'images_count': images_count, 'unlisted': True, 
-             'prev_page': prev_page, 'next_page': next_page})
+    return render(request, 'main/ranking.html', {'images': images, 'pages': pages, 'current_page': page, 'unlisted': True, 'editor': True})
 
 @csrf_exempt
 @require_POST
@@ -448,7 +461,11 @@ def register_character(request):
         try:
             character = Character.objects.get(name_en=data['name_en'])
         except:
-            return JsonResponse({ "success": False, })
+            user = UserSocialAuth.objects.get(user_id=request.user.id)
+            if user.access_token['screen_name'] == 'kivantium':
+                character = Character.objects.create(name_en=data['name_en'])
+            else:
+                return JsonResponse({ "success": False, })
     else:
         return JsonResponse({ "success": False, })
     try:

@@ -131,7 +131,7 @@ def register_status(status_id):
         probs = softmax(ort_outs[0])
         is_illust = True if probs[1] > 0.3 else False
 
-        if status.favorite_count < 100:
+        if status.favorite_count < 50:
             is_illust = False
 
         if media['type'] == 'video' or media['type'] == 'animated_gif':

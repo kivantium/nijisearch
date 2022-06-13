@@ -30,7 +30,7 @@ class Command(BaseCommand):
         for status_entry in statuses:
             try:
                 status = api.get_status(status_entry.status_id)
-                if status_entry.like_count < 100 and status.favorite_count > 100:
+                if status_entry.like_count < 50 and status.favorite_count > 50:
                     image_entries = ImageEntry.objects.filter(status=status_entry)
                     for image in image_entries:
                         if not image.is_trimmed:

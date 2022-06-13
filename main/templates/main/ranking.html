@@ -4,14 +4,19 @@
 
 {% block content %}
 <div class="container">
+  {% if unlisted %}
+  <h2 class="h4 mt-5">非収載画像リスト</h2>
+  <p>72時間以内に投稿された非収載画像をいいね数が多い順に並べています。いいね数は画像取得時の値を利用しているため最新の値を反映していない場合があります。</p>
+  {% else %}
   <h2 class="h4 mt-5">デイリーランキング</h2>
   <p>24時間以内に投稿されたイラストをいいね数が多い順に並べています。いいね数は画像取得時の値を利用しているため最新の値を反映していない場合があります。</p>
-
+  {% endif %}
   <hr>
   <div class="mt-4 row row-cols-2 row-cols-sm-3 row-cols-md-4 row-cols-lg-6 g-0" id="grid" data-masonry='{"percentPosition": true}'>
     {% for image in images %}
       <div class="col mb-0">
-          <a href="{% url 'status' image.status.status_id %}?n={{image.image_number}}"><img class="w-100 img-thumbnail" src="{{image.media_url}}:small" alt="イラスト" onerror="this.style.display='none'"{% if image.width != 0 %} width="{{ image.width }}" height="{{ image.height }}"{% endif %}></a>
+          <a href="{% url 'status' image.status.status_id %}?n={{image.image_number}}"><img class="w-100 img-thumbnail" src="{{image.media_url}}:small" alt="イラスト" onerror="this.style.display='none'"{% if image.width != 0 %} width="{{ image.width }}" height="{{ image.height }}"{% endif %}>
+        {% if editor and not image.confirmed %}<span class="position-absolute top-0 start-0 m-2 p-1 bg-danger border border-light rounded-circle"><span class="visually-hidden">Unconfirmed</span></span>{% endif %}</a>
       </div>
     {% endfor %}
   </div>

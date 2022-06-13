@@ -9,8 +9,6 @@
     {% for tag in i2vtags %}<span class="badge bg-secondary rounded-pill">{{ tag }}</span> {% endfor %}
     {% if character %}<span class="badge bg-success rounded-pill">{% if character.name_ja %}{{ character.name_ja }}{% else %}{{ character.name_en }}{% endif %}</span>{% endif %}
     の検索結果<small>（{{ images_count | default:"0"}} 枚）</small></h2>
-  {% elif unlisted %}
-  <h2 class="h5 mt-5">非収載画像<small>（{{ images_count }} 枚）</small></h2>
   {% else %}
   <h2 class="h5 mt-5">全ての画像<small>（{{ images_count }} 枚）</small></h2>
   {% endif %}
