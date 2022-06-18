@@ -52,6 +52,16 @@ def index(request):
 def about(request):
     return render(request, 'main/about.html')
 
+def reduce_pages(pages, current_page):
+    if len(pages) > 10:
+        if current_page <= 5:
+            pages = pages[:8] + [None] + pages[-1:]
+        elif current_page <= len(pages) - 5:
+            pages = pages[:1] + [None] + pages[current_page-4:current_page+3] + [None] + pages[-1:]
+        else:
+            pages = pages[:1] + [None] + pages[-8:]
+    return pages
+
 def ranking(request):
     page = request.GET.get('page', default='1')
     page = int(page)
@@ -73,10 +83,13 @@ def ranking(request):
     page_size = -(-images_count // images_per_page)  # round up
     url = request.path
     if images_count > images_per_page:
-        pages = [f'{url}?page={p+1}' for p in range(page_size)]
+        pages = [{"url": f'{url}?page={p+1}', "n": p+1} for p in range(page_size)]
         images = images[images_per_page*(page-1):images_per_page*page]
+        pages = reduce_pages(pages, page)
     else:
         pages = None
+    prev_page = url + f'?page={page-1}' if page != 1 else None
+    next_page = url + f'?page={page+1}' if page != page_size and page_size != 0 else None
 
     editor = False
     if request.user.is_authenticated:
@@ -84,7 +97,7 @@ def ranking(request):
         profile = UserProfile.objects.get(user=user)
         if profile.editor:
             editor = True
-    return render(request, 'main/ranking.html', {'images': images, 'pages': pages, 'current_page': page, 'editor': editor})
+    return render(request, 'main/ranking.html', {'images': images, 'pages': pages, 'current_page': page, 'prev_page': prev_page, 'next_page': next_page, 'editor': editor})
 
 def translate(request):
     page = int(request.GET.get('page', default='0'))
@@ -199,13 +212,18 @@ def author(request, screen_name):
     if show_unlisted:
         url += '&show_unlisted=t'
     if images_count > images_per_page:
-        pages = [f'{url}&page={p+1}' for p in range(page_size)]
+        pages = [{"url": f'{url}&page={p+1}', "n": p+1} for p in range(page_size)]
         images = images[images_per_page*(page-1):images_per_page*page]
+        pages = reduce_pages(pages, page)
     else:
         pages = None
+    prev_page = url + f'&page={page-1}' if page != 1 else None
+    next_page = url + f'&page={page+1}' if page != page_size and page_size != 0 else None
+
     return render(request, 'main/author.html', {
         'author': author, 'order': order, 'show_unlisted': show_unlisted,
         'pages': pages, 'current_page': page,
+        'prev_page': prev_page, 'next_page': next_page,
         'image_entry_list': images,
         'images_count': images_count})
 
@@ -373,7 +391,7 @@ def search(request):
 
     images_per_page = 120
     images_count = images.count()
-    last_page = -(-images_count // images_per_page)  # round up
+    page_size = -(-images_count // images_per_page)  # round up
     url = request.path + f'?{query}'
     if not only_confirmed:
         url += '&confirmed=f'
@@ -387,16 +405,22 @@ def search(request):
     else:
         images = images.order_by('-status__created_at', 'image_number')
 
-    prev_page = url + f'&page={page-1}' if page != 1 else None
-    next_page = url + f'&page={page+1}' if page != last_page and last_page != 0 else None
+    if images_count > images_per_page:
+        pages = [{"url": f'{url}&page={p+1}', "n": p+1} for p in range(page_size)]
+        images = images[images_per_page*(page-1):images_per_page*page]
+        pages = reduce_pages(pages, page)
+    else:
+        pages = None
 
-    images = images[images_per_page*(page-1):images_per_page*page]
+    prev_page = url + f'&page={page-1}' if page != 1 else None
+    next_page = url + f'&page={page+1}' if page != page_size and page_size != 0 else None
 
     return render(request, 'main/search.html', 
             {'images': images, 'images_count': images_count, 'order': order,
              'only_confirmed': only_confirmed, 'editor': editor,
              'i2vtags': i2vtags, 'character': character_tag, 'related_hashtags': related_hashtags,
-             'prev_page': prev_page, 'next_page': next_page})
+             'prev_page': prev_page, 'next_page': next_page, 'pages': pages, 'current_page': page})
+
 
 def unlisted(request):
     page = request.GET.get('page', default='1')
@@ -414,12 +438,15 @@ def unlisted(request):
     page_size = -(-images_count // images_per_page)  # round up
     url = request.path
     if images_count > images_per_page:
-        pages = [f'{url}?page={p+1}' for p in range(page_size)]
+        pages = [{"url": f'{url}?page={p+1}', "n": p+1} for p in range(page_size)]
         images = images[images_per_page*(page-1):images_per_page*page]
+        pages = reduce_pages(pages, page)
     else:
         pages = None
+    prev_page = url + f'?page={page-1}' if page != 1 else None
+    next_page = url + f'?page={page+1}' if page != page_size and page_size != 0 else None
 
-    return render(request, 'main/ranking.html', {'images': images, 'pages': pages, 'current_page': page, 'unlisted': True, 'editor': True})
+    return render(request, 'main/ranking.html', {'images': images, 'pages': pages, 'current_page': page, 'prev_page': prev_page, 'next_page': next_page, 'unlisted': True, 'editor': True})
 
 @csrf_exempt
 @require_POST
