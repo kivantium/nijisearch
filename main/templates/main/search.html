@@ -4,9 +4,11 @@
 
 {% block content %}
 <div class="container">
-  {% if i2vtags or character or notfound %}
+  {% if keyword or i2vtags or character or hashtags or notfound %}
   <h2 class="h5 mt-5">
+    {% if keyword %}<span class="badge bg-dark rounded-pill">{{ keyword }}</span> {% endif %}
     {% for tag in i2vtags %}<span class="badge bg-secondary rounded-pill">{{ tag }}</span> {% endfor %}
+    {% for tag in hashtags %}<span class="badge bg-info rounded-pill">{{ tag }}</span> {% endfor %}
     {% if character %}<span class="badge bg-success rounded-pill">{% if character.name_ja %}{{ character.name_ja }}{% else %}{{ character.name_en }}{% endif %}</span>{% endif %}
     の検索結果<small>（{{ images_count | default:"0"}} 枚）</small></h2>
   {% else %}

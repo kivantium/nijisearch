@@ -53,13 +53,25 @@ def about(request):
     return render(request, 'main/about.html')
 
 def reduce_pages(pages, current_page):
-    if len(pages) > 10:
-        if current_page <= 5:
-            pages = pages[:8] + [None] + pages[-1:]
-        elif current_page <= len(pages) - 5:
-            pages = pages[:1] + [None] + pages[current_page-4:current_page+3] + [None] + pages[-1:]
+    page_size = len(pages)
+    if page_size > 6:
+        if current_page <= 3:
+            pages = pages[:4] + [None] + pages[-1:]
+        elif current_page > 1000:
+            if current_page >= page_size:
+                pages = pages[:1] + [None] + pages[-2:]
+            else:
+                pages = pages[current_page-2:current_page+1]
+        elif current_page > 100:
+            if current_page >= page_size - 1:
+                pages = pages[:1] + [None] + pages[-3:]
+            else: 
+                pages = pages[current_page-3:current_page+2]
         else:
-            pages = pages[:1] + [None] + pages[-8:]
+            if current_page >= page_size - 3:
+                pages = pages[:1] + [None] + pages[-5:]
+            else: 
+                pages = pages[current_page-4:current_page+3]
     return pages
 
 def ranking(request):
@@ -351,7 +363,8 @@ def search(request):
     if hashtags is not None:
         query += f"&hashtags={quote(hashtags)}"
         status_list = Status.objects.all()
-        for tag_name in hashtags.split(';'):
+        hashtags = hashtags.split(';')
+        for tag_name in hashtags:
             try:
                 tag = HashTag.objects.get(name=tag_name)
             except HashTag.DoesNotExist:
@@ -376,8 +389,8 @@ def search(request):
         images = images.filter(characters=character_tag)
         if only_confirmed:
             images = images.filter(confirmed=True)
-        hashtags = HashTag.objects.filter(characters=character_tag)
-        related_hashtags = ','.join([tag.name for tag in hashtags])
+        related_hashtags = HashTag.objects.filter(characters=character_tag)
+        related_hashtags = ','.join([tag.name for tag in related_hashtags])
 
     if request.user.is_authenticated:
         user = UserSocialAuth.objects.get(user_id=request.user.id)
@@ -417,9 +430,10 @@ def search(request):
 
     return render(request, 'main/search.html', 
             {'images': images, 'images_count': images_count, 'order': order,
-             'only_confirmed': only_confirmed, 'editor': editor,
-             'i2vtags': i2vtags, 'character': character_tag, 'related_hashtags': related_hashtags,
-             'prev_page': prev_page, 'next_page': next_page, 'pages': pages, 'current_page': page})
+            'only_confirmed': only_confirmed, 'editor': editor, 'keyword': keyword,
+             'i2vtags': i2vtags, 'character': character_tag, 'hashtags': hashtags,
+             'related_hashtags': related_hashtags, 'pages': pages, 'current_page': page,
+             'prev_page': prev_page, 'next_page': next_page})
 
 
 def unlisted(request):
