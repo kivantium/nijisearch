@@ -52,7 +52,6 @@ class Status(models.Model):
     like_count = models.IntegerField(default=0)
     created_at = models.DateTimeField()
     registered_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
     thumbnail = models.IntegerField(default=0)
     thumbnail_url = models.URLField()
 
@@ -74,10 +73,9 @@ class ImageEntry(models.Model):
     parent = models.ForeignKey("self", on_delete=models.PROTECT, null=True)
     i2vtags = models.ManyToManyField(I2VTag)
     characters = models.ManyToManyField(Character, related_name='characters')
-    similar_characters = models.ManyToManyField(Character, related_name='similars')
     width = models.IntegerField(default=0)
     height = models.IntegerField(default=0)
-    thumbnail = models.FilePathField()
+    updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
         return "{} (by @{})".format(self.media_url, self.author.screen_name)

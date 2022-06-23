@@ -3,3 +3,4 @@ onnxruntime
 scikit-image
 tweepy
 imagehash
+social-auth-app-django

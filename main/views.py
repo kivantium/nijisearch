@@ -19,7 +19,9 @@ import threading
 import itertools
 import json
 import logging
+import os
 from urllib.parse import urlparse, quote
+import urllib.request
 
 def log_info(msg):
     logger = logging.getLogger('command')
@@ -471,8 +473,20 @@ def report(request):
         image = ImageEntry.objects.get(status=status, image_number=data['image_number'])
         if data['report_type'] == 'not_illust':
             image.collection = False
+            try:
+                filename = os.path.basename(urlparse(image.media_url).path)
+                filename = os.path.join(os.path.dirname(__file__), '../false_positive', filename)
+                urllib.request.urlretrieve(image.media_url + ':small', filename)
+            except:
+                pass
         elif data['report_type'] == 'is_illust':
             image.collection = True
+            try:
+                filename = os.path.basename(urlparse(image.media_url).path)
+                filename = os.path.join(os.path.dirname(__file__), '../false_negative', filename)
+                urllib.request.urlretrieve(image.media_url + ':small', filename)
+            except:
+                pass
         elif data['report_type'] == 'safe':
             image.is_nsfw = False
         elif data['report_type'] == 'not_safe':
@@ -515,6 +529,12 @@ def register_character(request):
         image_entry.characters.add(character)
         image_entry.confirmed = True
         image_entry.save()
+        identical_images = ImageEntry.objects.filter(imagehash=hash_img, author=author_entry)
+        for entry in identical_images:
+            entry.characters.clear()
+            entry.characters.add(*image_entry.characters.all())
+            entry.confirmed = True
+            entry.save()
         user = UserSocialAuth.objects.get(user_id=request.user.id)
         log_info(f"Register {data['name_en']} to status {data['status_id']} (n={data['image_number']}) by {user.access_token['screen_name']}")
         return JsonResponse({ "success": True, })
@@ -537,6 +557,12 @@ def delete_character(request):
     else:
         image_entry.confirmed = True
     image_entry.save()
+    identical_images = ImageEntry.objects.filter(imagehash=hash_img, author=author_entry)
+    for entry in identical_images:
+        entry.characters.clear()
+        entry.characters.add(*image_entry.characters.all())
+        entry.confirmed = image_entry.confirmed
+        entry.save()
     user = UserSocialAuth.objects.get(user_id=request.user.id)
     log_info(f"Delete {data['name']} from status {data['status_id']} (n={data['image_number']}) by {user.access_token['screen_name']}")
     return JsonResponse({ "success": True, })
