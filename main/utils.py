@@ -206,7 +206,7 @@ def register_status(status_id):
             img_entry.characters.add(*tag_character)
 
         # Calculate image hash
-        hash_img = imagehash.average_hash(img_pil)
+        hash_img = imagehash.phash(img_pil)
         img_entry.imagehash = str(hash_img)
         img_entry.save()
         image_hashes.append(hash_img)
