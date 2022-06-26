@@ -529,8 +529,10 @@ def register_character(request):
         image_entry.characters.add(character)
         image_entry.confirmed = True
         image_entry.save()
-        identical_images = ImageEntry.objects.filter(imagehash=hash_img, author=author_entry)
+        identical_images = ImageEntry.objects.filter(imagehash=image_entry.imagehash, author=image_entry.author)
         for entry in identical_images:
+            if entry == image_entry:
+                continue
             entry.characters.clear()
             entry.characters.add(*image_entry.characters.all())
             entry.confirmed = True
@@ -557,8 +559,10 @@ def delete_character(request):
     else:
         image_entry.confirmed = True
     image_entry.save()
-    identical_images = ImageEntry.objects.filter(imagehash=hash_img, author=author_entry)
+    identical_images = ImageEntry.objects.filter(imagehash=image_entry.imagehash, author=image_entry.author)
     for entry in identical_images:
+        if entry == image_entry:
+            continue
         entry.characters.clear()
         entry.characters.add(*image_entry.characters.all())
         entry.confirmed = image_entry.confirmed
