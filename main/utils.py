@@ -215,6 +215,7 @@ def register_status(status_id):
         identical_images = ImageEntry.objects.filter(imagehash=hash_img, author=author_entry).order_by('status__created_at')
         if identical_images.count() >= 2:
             parent = identical_images[0]
+            parent.is_duplicated = False
             for image in identical_images[1:]:
                 if image.status == parent.status:
                     continue
@@ -222,10 +223,16 @@ def register_status(status_id):
                 image.parent = parent
                 image.save()
                 if image.confirmed:
+                    parent.characters.clear()
                     parent.characters.add(*image.characters.all())
                     parent.confirmed = True
-            parent.is_duplicated = False
             parent.save()
+            if parent.confirmed:
+                for image in identical_images:
+                    image.characters.clear()
+                    image.characters.add(*parent.characters.all())
+                    image.confirmed = True
+                    image.save()
 
     # Detect diff and trimming
     entries = ImageEntry.objects.filter(status=status_entry).order_by('image_number')
