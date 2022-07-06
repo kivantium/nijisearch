@@ -103,6 +103,9 @@ def register_status(status_id):
         t, _ = HashTag.objects.get_or_create(name=tag)
         status_entry.hashtags.add(t)
         tag_characters.append(t.characters.all())
+        match_character = Character.objects.filter(name_ja__contains=tag)
+        if match_character.count() == 1:
+            tag_characters.append(match_character)
     status_entry.retweet_count = status.retweet_count
     status_entry.like_count = status.favorite_count
     status_entry.save()
