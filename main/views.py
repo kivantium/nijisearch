@@ -45,11 +45,21 @@ def index(request):
     else:
         images = images.filter(is_nsfw=False)
         ranking_images = ranking_images.filter(is_nsfw=False)
+    names = []
+    for entry in images[:500]:
+        names.extend([c.name_en for c in entry.characters.all()])
+    count = collections.Counter(names)
+    freq_index = [(-count[name], names.index(name), name) for name in set(names)]
+    en_names = [c[2] for c in sorted(freq_index)][:20]
+    characters = []
+    for name in en_names:
+        character = Character.objects.get(name_en=name)
+        characters.append({"name_en": name, "name_ja": character.name_ja if character.name_ja else name})
     images = images.order_by('-pk')[:24]
     ranking_images = ranking_images.order_by('-status__like_count')[:12]
 
     return render(request, 'main/index.html',
-            {'images': images, 'ranking_images': ranking_images, 'editor': editor})
+            {'images': images, 'ranking_images': ranking_images, 'editor': editor, 'characters': characters})
 
 def about(request):
     return render(request, 'main/about.html')
