@@ -22,6 +22,8 @@ urlpatterns = [
     path('register_character/', views.register_character, name='register_character'),
     path('delete_character/', views.delete_character, name='delete_character'),
     path('suggest_character/', views.suggest_character, name='suggest_character'),
+    path('pose_search/', views.pose_search, name='pose_search'),
+    path('pose_search_request/', views.pose_search_request, name='pose_search_request'),
     path('logout/', django.contrib.auth.views.LogoutView.as_view(template_name = 'main/logout.html'),
          name='logout'),
 ]

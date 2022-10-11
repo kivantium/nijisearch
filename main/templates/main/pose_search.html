@@ -1,0 +1,404 @@
+{% extends 'main/base.html' %}
+
+{% block page_title%}姿勢検索{% endblock %}
+
+{% block content %}
+<style>
+.box {
+  margin: 10px 20px;
+  border: solid 2px #000000;
+  width: 256px;
+  height: 256px;
+  touch-action: none;
+  user-select: none;
+  position: relative;
+}
+.line {
+  position: absolute;
+  left: 0px;
+  top: 0px;
+  width: 256px;
+  height: 256px;
+}
+.drag {
+  place-items: center;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: silver;
+  touch-action: none;
+  user-select: none;
+  position: absolute;
+  left: 128px;
+  top: 35px;
+}
+.drag-l {
+  place-items: center;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: palegreen;
+  touch-action: none;
+  user-select: none;
+  position: absolute;
+}
+.drag-r {
+  place-items: center;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: coral;
+  touch-action: none;
+  user-select: none;
+  position: absolute;
+}
+#nose { top: 25px; left: 120px;
+}#eye_left { top: 15px; left: 136px;
+}#eye_right { top: 15px; left: 104px;
+}#shoulder_left { top: 52px; left: 140px;
+}#shoulder_right { top: 52px; left: 100px;
+}#elbow_left { top: 82px; left: 164px;
+}#elbow_right { top: 82px; left: 76px;
+}#wrist_left { top: 118px; left: 190px;
+}#wrist_right { top: 118px; left: 50px;
+}#hip_left { top: 118px; left: 142px;
+}#hip_right { top: 118px; left: 98px;
+}#knee_left { top: 168px; left: 140px;
+}#knee_right { top: 168px; left: 100px;
+}#ankle_left { top: 218px; left: 148px;
+}#ankle_right { top: 218px; left: 92px}
+</style>
+<div class="container">
+  <div class="box">
+    <canvas class="line" id="canvasline" width="256" height="256"></canvas>
+    <div class="drag" id="nose"></div>
+    <div class="drag-l" id="eye_left"></div>
+    <div class="drag-r" id="eye_right"></div>
+    <div class="drag-l" id="shoulder_left"></div>
+    <div class="drag-r" id="shoulder_right"></div>
+    <div class="drag-l" id="elbow_left"></div>
+    <div class="drag-r" id="elbow_right"></div>
+    <div class="drag-l" id="wrist_left"></div>
+    <div class="drag-r" id="wrist_right"></div>
+    <div class="drag-l" id="hip_left"></div>
+    <div class="drag-r" id="hip_right"></div>
+    <div class="drag-l" id="knee_left"></div>
+    <div class="drag-r" id="knee_right"></div>
+    <div class="drag-l" id="ankle_left"></div>
+    <div class="drag-r" id="ankle_right"></div>
+  </div>
+  <button type="button" onclick="search()" style="margin-left: 15px; margin-right: 50px;">類似ポーズ検索</button>
+  <button type="button" onclick="reset()">初期位置に戻す</button>
+</div>
+{% endblock %}
+
+{% block script %}
+<script src="https://unpkg.com/interactjs/dist/interact.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+<script>
+var pos_nose = { y: 0, x: 0 }
+var pos_eye_left = { y: 0, x: 0 }
+var pos_eye_right = { y: 0, x: 0 }
+var pos_shoulder_left = { y: 0, x: 0 }
+var pos_shoulder_right = { y: 0, x: 0 }
+var pos_elbow_left = { y: 0, x: 0 }
+var pos_elbow_right = { y: 0, x: 0 }
+var pos_wrist_left = { y: 0, x: 0 }
+var pos_wrist_right = { y: 0, x: 0 }
+var pos_hip_left = { y: 0, x: 0 }
+var pos_hip_right = { y: 0, x: 0 }
+var pos_knee_left = { y: 0, x: 0 }
+var pos_knee_right = { y: 0, x: 0 }
+var pos_ankle_left = { y: 0, x: 0 }
+var pos_ankle_right = { y: 0, x: 0 }
+
+interact('.drag').draggable({
+  listeners: {
+    move(event) {
+      pos_nose.x += event.dx
+      pos_nose.y += event.dy
+      event.target.style.transform =
+        `translate(${pos_nose.x}px, ${pos_nose.y}px)`
+      canvasline()
+    },
+  },
+  modifiers: [
+    interact.modifiers.restrict({
+      restriction: 'parent',
+      endOnly: true
+    })
+  ],
+})
+interact('.drag-l').draggable({
+  listeners: {
+    move(event) {
+      if ('eye_left' == event.target.id){
+        pos_eye_left.x += event.dx
+        pos_eye_left.y += event.dy
+        event.target.style.transform = `translate(${pos_eye_left.x}px, ${pos_eye_left.y}px)`
+      }else if ('shoulder_left' == event.target.id){
+        pos_shoulder_left.x += event.dx
+        pos_shoulder_left.y += event.dy
+        event.target.style.transform = `translate(${pos_shoulder_left.x}px, ${pos_shoulder_left.y}px)`
+      }else if ('elbow_left' == event.target.id){
+        pos_elbow_left.x += event.dx
+        pos_elbow_left.y += event.dy
+        event.target.style.transform = `translate(${pos_elbow_left.x}px, ${pos_elbow_left.y}px)`
+      }else if ('wrist_left' == event.target.id){
+        pos_wrist_left.x += event.dx
+        pos_wrist_left.y += event.dy
+        event.target.style.transform = `translate(${pos_wrist_left.x}px, ${pos_wrist_left.y}px)`
+      }else if ('hip_left' == event.target.id){
+        pos_hip_left.x += event.dx
+        pos_hip_left.y += event.dy
+        event.target.style.transform = `translate(${pos_hip_left.x}px, ${pos_hip_left.y}px)`
+      }else if ('knee_left' == event.target.id){
+        pos_knee_left.x += event.dx
+        pos_knee_left.y += event.dy
+        event.target.style.transform = `translate(${pos_knee_left.x}px, ${pos_knee_left.y}px)`
+      }else if ('ankle_left' == event.target.id){
+        pos_ankle_left.x += event.dx
+        pos_ankle_left.y += event.dy
+        event.target.style.transform = `translate(${pos_ankle_left.x}px, ${pos_ankle_left.y}px)`
+      }
+      canvasline()
+    },
+  },
+  modifiers: [
+    interact.modifiers.restrict({
+      restriction: 'parent',
+      endOnly: true
+    })
+  ],
+})
+interact('.drag-r').draggable({
+  listeners: {
+    move(event) {
+      if ('eye_right' == event.target.id){
+        pos_eye_right.x += event.dx
+        pos_eye_right.y += event.dy
+        event.target.style.transform = `translate(${pos_eye_right.x}px, ${pos_eye_right.y}px)`
+      }else if ('shoulder_right' == event.target.id){
+        pos_shoulder_right.x += event.dx
+        pos_shoulder_right.y += event.dy
+        event.target.style.transform = `translate(${pos_shoulder_right.x}px, ${pos_shoulder_right.y}px)`
+      }else if ('elbow_right' == event.target.id){
+        pos_elbow_right.x += event.dx
+        pos_elbow_right.y += event.dy
+        event.target.style.transform = `translate(${pos_elbow_right.x}px, ${pos_elbow_right.y}px)`
+      }else if ('wrist_right' == event.target.id){
+        pos_wrist_right.x += event.dx
+        pos_wrist_right.y += event.dy
+        event.target.style.transform = `translate(${pos_wrist_right.x}px, ${pos_wrist_right.y}px)`
+      }else if ('hip_right' == event.target.id){
+        pos_hip_right.x += event.dx
+        pos_hip_right.y += event.dy
+        event.target.style.transform = `translate(${pos_hip_right.x}px, ${pos_hip_right.y}px)`
+      }else if ('knee_right' == event.target.id){
+        pos_knee_right.x += event.dx
+        pos_knee_right.y += event.dy
+        event.target.style.transform = `translate(${pos_knee_right.x}px, ${pos_knee_right.y}px)`
+      }else if ('ankle_right' == event.target.id){
+        pos_ankle_right.x += event.dx
+        pos_ankle_right.y += event.dy
+        event.target.style.transform = `translate(${pos_ankle_right.x}px, ${pos_ankle_right.y}px)`
+      }
+      canvasline()
+    },
+  },
+  modifiers: [
+    interact.modifiers.restrict({
+      restriction: 'parent',
+      endOnly: true
+    })
+  ],
+})
+function reset() {
+  pos_nose = { y: 0, x: 0 }
+  pos_eye_left = { y: 0, x: 0 }
+  pos_eye_right = { y: 0, x: 0 }
+  pos_shoulder_left = { y: 0, x: 0 }
+  pos_shoulder_right = { y: 0, x: 0 }
+  pos_elbow_left = { y: 0, x: 0 }
+  pos_elbow_right = { y: 0, x: 0 }
+  pos_wrist_left = { y: 0, x: 0 }
+  pos_wrist_right = { y: 0, x: 0 }
+  pos_hip_left = { y: 0, x: 0 }
+  pos_hip_right = { y: 0, x: 0 }
+  pos_knee_left = { y: 0, x: 0 }
+  pos_knee_right = { y: 0, x: 0 }
+  pos_ankle_left = { y: 0, x: 0 }
+  pos_ankle_right = { y: 0, x: 0 }
+  document.getElementById('nose').style.transform = `translate(0px, 0px)`
+  document.getElementById('eye_left').style.transform = `translate(0px, 0px)`
+  document.getElementById('eye_right').style.transform = `translate(0px, 0px)`
+  document.getElementById('shoulder_left').style.transform = `translate(0px, 0px)`
+  document.getElementById('shoulder_right').style.transform = `translate(0px, 0px)`
+  document.getElementById('elbow_left').style.transform = `translate(0px, 0px)`
+  document.getElementById('elbow_right').style.transform = `translate(0px, 0px)`
+  document.getElementById('wrist_left').style.transform = `translate(0px, 0px)`
+  document.getElementById('wrist_right').style.transform = `translate(0px, 0px)`
+  document.getElementById('hip_left').style.transform = `translate(0px, 0px)`
+  document.getElementById('hip_right').style.transform = `translate(0px, 0px)`
+  document.getElementById('knee_left').style.transform = `translate(0px, 0px)`
+  document.getElementById('knee_right').style.transform = `translate(0px, 0px)`
+  document.getElementById('ankle_left').style.transform = `translate(0px, 0px)`
+  document.getElementById('ankle_right').style.transform = `translate(0px, 0px)`
+  canvasline()
+  canvasline()
+}
+function cul_nose(){return {x: pos_nose.x + 128, y: pos_nose.y + 33}}
+function cul_eye_left(){return {x: pos_eye_left.x + 144, y: pos_eye_left.y + 23}}
+function cul_eye_right(){return {x: pos_eye_right.x + 112, y: pos_eye_right.y + 23}}
+function cul_shoulder_left(){return {x: pos_shoulder_left.x + 148, y: pos_shoulder_left.y + 60}}
+function cul_shoulder_right(){return {x: pos_shoulder_right.x + 108, y: pos_shoulder_right.y + 60}}
+function cul_elbow_left(){return {x: pos_elbow_left.x + 172, y: pos_elbow_left.y + 90}}
+function cul_elbow_right(){return {x: pos_elbow_right.x + 84, y: pos_elbow_right.y + 90}}
+function cul_wrist_left(){return {x: pos_wrist_left.x + 198, y: pos_wrist_left.y + 126}}
+function cul_wrist_right(){return {x: pos_wrist_right.x + 58, y: pos_wrist_right.y + 126}}
+function cul_hip_left(){return {x: pos_hip_left.x + 150, y: pos_hip_left.y + 126}}
+function cul_hip_right(){return {x: pos_hip_right.x + 106, y: pos_hip_right.y + 126}}
+function cul_knee_left(){return {x: pos_knee_left.x + 148, y: pos_knee_left.y + 176}}
+function cul_knee_right(){return {x: pos_knee_right.x + 108, y: pos_knee_right.y + 176}}
+function cul_ankle_left(){return {x: pos_ankle_left.x + 156, y: pos_ankle_left.y + 226}}
+function cul_ankle_right(){return {x: pos_ankle_right.x + 100, y: pos_ankle_right.y + 226}}
+
+function canvasline(){
+  var canvas = document.getElementById('canvasline');
+  var ctx = canvas.getContext('2d');
+  var c_nose = cul_nose();
+  var c_eye_left = cul_eye_left();
+  var c_eye_right = cul_eye_right();
+  var c_shoulder_left = cul_shoulder_left();
+  var c_shoulder_right = cul_shoulder_right();
+  var c_elbow_left = cul_elbow_left();
+  var c_elbow_right = cul_elbow_right();
+  var c_wrist_left = cul_wrist_left();
+  var c_wrist_right = cul_wrist_right();
+  var c_hip_left = cul_hip_left();
+  var c_hip_right = cul_hip_right();
+  var c_knee_left = cul_knee_left();
+  var c_knee_right = cul_knee_right();
+  var c_ankle_left = cul_ankle_left();
+  var c_ankle_right = cul_ankle_right();
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  // face
+  ctx.beginPath();
+  var el = Math.sqrt( Math.pow( c_eye_left.x-c_nose.x, 2 ) + Math.pow( c_eye_left.y-c_nose.y, 2 ) ) ;
+  var er = Math.sqrt( Math.pow( c_eye_right.x-c_nose.x, 2 ) + Math.pow( c_eye_right.y-c_nose.y, 2 ) ) ;
+  if (el > er){
+    ctx.arc(c_nose.x, c_nose.y, el+4, 0, Math.PI * 2.0, true);
+  }else{
+    ctx.arc(c_nose.x, c_nose.y, er+4, 0, Math.PI * 2.0, true);
+  }
+  ctx.fillStyle = "mistyrose";
+  ctx.fill();
+  // body
+  ctx.beginPath();
+  ctx.fillStyle = "skyblue";
+  ctx.moveTo(c_shoulder_left.x, c_shoulder_left.y);
+  ctx.lineTo(c_shoulder_right.x, c_shoulder_right.y);
+  ctx.lineTo(c_hip_right.x, c_hip_right.y);
+  ctx.lineTo(c_hip_left.x, c_hip_left.y);
+  ctx.fill();
+  // elbow_left
+  ctx.beginPath();
+  ctx.moveTo(c_shoulder_left.x, c_shoulder_left.y);
+  ctx.lineTo(c_elbow_left.x, c_elbow_left.y);
+  ctx.closePath();
+  ctx.strokeStyle = "powderblue";
+  ctx.lineWidth = 10;
+  ctx.stroke();
+  // elbow_right
+  ctx.beginPath();
+  ctx.moveTo(c_shoulder_right.x, c_shoulder_right.y);
+  ctx.lineTo(c_elbow_right.x, c_elbow_right.y);
+  ctx.closePath();
+  ctx.strokeStyle = "powderblue";
+  ctx.lineWidth = 10;
+  ctx.stroke();
+  // wrist_left
+  ctx.beginPath();
+  ctx.moveTo(c_wrist_left.x, c_wrist_left.y);
+  ctx.lineTo(c_elbow_left.x, c_elbow_left.y);
+  ctx.closePath();
+  ctx.strokeStyle = "powderblue";
+  ctx.lineWidth = 10;
+  ctx.stroke();
+  // wrist_right
+  ctx.beginPath();
+  ctx.moveTo(c_wrist_right.x, c_wrist_right.y);
+  ctx.lineTo(c_elbow_right.x, c_elbow_right.y);
+  ctx.closePath();
+  ctx.strokeStyle = "powderblue";
+  ctx.lineWidth = 10;
+  ctx.stroke();
+  // knee_left
+  ctx.beginPath();
+  ctx.moveTo(c_knee_left.x, c_knee_left.y);
+  ctx.lineTo(c_hip_left.x, c_hip_left.y);
+  ctx.closePath();
+  ctx.strokeStyle = "lightsteelblue";
+  ctx.lineWidth = 10;
+  ctx.stroke();
+  // knee_right
+  ctx.beginPath();
+  ctx.moveTo(c_knee_right.x, c_knee_right.y);
+  ctx.lineTo(c_hip_right.x, c_hip_right.y);
+  ctx.closePath();
+  ctx.strokeStyle = "lightsteelblue";
+  ctx.lineWidth = 10;
+  ctx.stroke();
+  // ankle_left
+  ctx.beginPath();
+  ctx.moveTo(c_knee_left.x, c_knee_left.y);
+  ctx.lineTo(c_ankle_left.x, c_ankle_left.y);
+  ctx.closePath();
+  ctx.strokeStyle = "lightsteelblue";
+  ctx.lineWidth = 10;
+  ctx.stroke();
+  // ankle_right
+  ctx.beginPath();
+  ctx.moveTo(c_knee_right.x, c_knee_right.y);
+  ctx.lineTo(c_ankle_right.x, c_ankle_right.y);
+  ctx.closePath();
+  ctx.strokeStyle = "lightsteelblue";
+  ctx.lineWidth = 10;
+  ctx.stroke();
+}
+window.onload = function(){
+  canvasline()
+}
+function search(){
+  var query = {
+    nose: cul_nose(), eye_left: cul_eye_left(), eye_right: cul_eye_right(),
+    shoulder_left: cul_shoulder_left(), shoulder_right: cul_shoulder_right(), elbow_left: cul_elbow_left(), elbow_right: cul_elbow_right(),
+    wrist_left: cul_wrist_left(), wrist_right: cul_wrist_right(), hip_left: cul_hip_left(), hip_right: cul_hip_right(),
+    knee_left: cul_knee_left(), knee_right: cul_knee_right(), ankle_left: cul_ankle_left(), ankle_right: cul_ankle_right()
+  }
+  axios.post('{% url 'pose_search_request' %}', query).then(function (response) {
+    var row = document.getElementById('row');
+    if (row != null){
+      row.remove();
+    }
+    var data = response.data.images;
+    var divrow = document.createElement('div');
+    divrow.className = 'row';
+    divrow.id = 'row';
+    for (const i in data) {
+      var divcol = document.createElement('div');
+      divcol.className = 'col-4 col-md-3 col-lg-2 my-1 px-1';
+      var atag = document.createElement('a');
+      atag.href = data[i]['status_url'];
+      img = document.createElement('img');
+      img.className = 'img-fluid';
+      img.src = data[i]['media_url'];
+      atag.appendChild(img);
+      divcol.appendChild(atag);
+      divrow.appendChild(divcol);
+    }
+    document.body.appendChild(divrow);
+  })
+}
+</script>
+{% endblock %}

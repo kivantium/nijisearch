@@ -20,8 +20,15 @@ import itertools
 import json
 import logging
 import os
+import pickle
 from urllib.parse import urlparse, quote
 import urllib.request
+from scipy import spatial
+import math
+
+global pose_data
+with open(os.path.join(os.path.dirname(__file__), 'fullbodywithd.dump'), 'rb') as f:
+    pose_data = pickle.load(f)
 
 def log_info(msg):
     logger = logging.getLogger('command')
@@ -587,3 +594,83 @@ def suggest_character(request):
     data = json.loads(request.body)
     characters = Character.objects.filter(name_en__contains=data['content'])
     return JsonResponse({"success": True, "names": [c.name_en for c in characters]})
+
+def minmax(m):
+    return max(0, min(m, 256))
+
+def ruijitweet(taisho):
+    global pose_data
+    max = [[1000.0,"",""],[1000.0,"",""],[1000.0,"",""],[1000.0,"",""],[1000.0,"",""],[1000.0,"",""],[1000.0,"",""],[1000.0,"",""],[1000.0,"",""],[1000.0,"",""]]
+    for body in pose_data:
+        ruijido = math.dist(body[2], taisho)
+        if max[9][0] > ruijido:
+            max[9][0] = ruijido
+            max[9][1] = body[1]
+            max[9][2] = body[0]
+            max.sort()
+    return max
+
+def pose_search(request):
+    return render(request, 'main/pose_search.html')
+
+@csrf_exempt
+@require_POST
+def pose_search_request(request):
+    try:
+        data = json.loads(request.body)
+        nose = data['nose']
+        eye_left = data['eye_left']
+        eye_right = data['eye_right']
+        shoulder_left = data['shoulder_left']
+        shoulder_right = data['shoulder_right']
+        elbow_left = data['elbow_left']
+        elbow_right = data['elbow_right']
+        wrist_left = data['wrist_left']
+        wrist_right = data['wrist_right']
+        hip_left = data['hip_left']
+        hip_right = data['hip_right']
+        knee_left = data['knee_left']
+        knee_right = data['knee_right']
+        ankle_left = data['ankle_left']
+        ankle_right = data['ankle_right']
+        ear_left_y = 0.0
+        ear_left_x = 0.0
+        ear_ritght_y = 0.0
+        ear_right_x = 0.0
+        if nose.get('y') > eye_left.get('y'):
+            ear_left_y = minmax(eye_left.get('y') + abs(eye_left.get('y') - nose.get('y')) / 2.0)
+        else:
+            ear_left_y = minmax(eye_left.get('y') - abs(eye_left.get('y') - nose.get('y')) / 2.0)
+        if nose.get('y') > eye_right.get('y'):
+            ear_ritght_y = minmax(eye_right.get('y') + abs(eye_right.get('y') - nose.get('y')) / 2.0)
+        else:
+            ear_ritght_y = minmax(eye_right.get('y') - abs(eye_right.get('y') - nose.get('y')) / 2.0)
+        if nose.get('x') > eye_left.get('x'):
+            ear_left_x = minmax(eye_left.get('x') - abs(eye_left.get('x') - nose.get('x')) / 2.0)
+        else:
+            ear_left_x = minmax(eye_left.get('x') + abs(eye_left.get('x') - nose.get('x')) / 2.0)
+        if nose.get('x') > eye_right.get('x'):
+            ear_right_x = minmax(eye_right.get('x') - abs(eye_right.get('x') - nose.get('x')) / 2.0)
+        else:
+            ear_right_x = minmax(eye_right.get('x') + abs(eye_right.get('x') - nose.get('x')) / 2.0)
+        taishomae = [[nose.get('y'), nose.get('x')], [eye_left.get('y'), eye_left.get('x')], [eye_right.get('y'), eye_right.get('x')],\
+        [ear_left_y, ear_left_x], [ear_ritght_y, ear_right_x], [shoulder_left.get('y'), shoulder_left.get('x')],\
+        [shoulder_right.get('y'), shoulder_right.get('x')], [elbow_left.get('y'), elbow_left.get('x')], [elbow_right.get('y'), elbow_right.get('x')],\
+        [wrist_left.get('y'), wrist_left.get('x')], [wrist_right.get('y'), wrist_right.get('x')], [hip_left.get('y'), hip_left.get('x')],\
+        [hip_right.get('y'), hip_right.get('x')], [knee_left.get('y'), knee_left.get('x')], [knee_right.get('y'), knee_right.get('x')],\
+        [ankle_left.get('y'), ankle_left.get('x')], [ankle_right.get('y'), ankle_right.get('x')],\
+        [(shoulder_left.get('y') + elbow_left.get('y')) / 2.0, (shoulder_left.get('x') + elbow_left.get('x')) / 2.0],\
+        [(shoulder_right.get('y') + elbow_right.get('y')) / 2.0, (shoulder_right.get('x') + elbow_right.get('x')) / 2.0],\
+        [(wrist_left.get('y') + elbow_left.get('y')) / 2.0, (wrist_left.get('x') + elbow_left.get('x')) / 2.0],\
+        [(wrist_right.get('y') + elbow_right.get('y')) / 2.0, (wrist_right.get('x') + elbow_right.get('x')) / 2.0],\
+        [(hip_left.get('y') + knee_left.get('y')) / 2.0, (hip_left.get('x') + knee_left.get('x')) / 2.0],\
+        [(hip_right.get('y') + knee_right.get('y')) / 2.0, (hip_right.get('x') + knee_right.get('x')) / 2.0],\
+        [(ankle_left.get('y') + knee_left.get('y')) / 2.0, (ankle_left.get('x') + knee_left.get('x')) / 2.0],\
+        [(ankle_right.get('y') + knee_right.get('y')) / 2.0, (ankle_right.get('x') + knee_right.get('x')) / 2.0]]
+        ruiji = ruijitweet(spatial.distance.pdist(taishomae))
+        images = []
+        for i in ruiji:
+            images.append({"status_url": f"/status/{i[2]}/?n=0", "media_url": f"{i[1]}:small"})
+        return JsonResponse({"images": images})
+    except Exception as e:
+        print("error:", e)
